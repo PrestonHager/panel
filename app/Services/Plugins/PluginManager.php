@@ -72,6 +72,9 @@ class PluginManager
 
         $this->assertEntryClassValid($plugin);
 
+        $manifest = app(ManifestValidator::class)->readFromDirectory(PluginRegistry::directoryFor($plugin->id));
+        $plugin->fill($this->attributesFromManifest($manifest));
+
         $plugin->enabled = true;
         $plugin->save();
 

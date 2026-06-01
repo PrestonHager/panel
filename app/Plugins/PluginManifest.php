@@ -74,4 +74,11 @@ final readonly class PluginManifest
 
         return is_array($server) ? $server : null;
     }
+
+    public function uiAdminServer(): ?array
+    {
+        $admin = $this->ui['admin']['server'] ?? null;
+
+        return is_array($admin) ? $admin : null;
+    }
 }

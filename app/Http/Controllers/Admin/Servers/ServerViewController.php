@@ -13,6 +13,8 @@ use Pterodactyl\Repositories\Eloquent\NestRepository;
 use Pterodactyl\Repositories\Eloquent\NodeRepository;
 use Pterodactyl\Repositories\Eloquent\MountRepository;
 use Pterodactyl\Traits\Controllers\JavascriptInjection;
+use Pterodactyl\Services\Plugins\PluginUiConfigService;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Pterodactyl\Repositories\Eloquent\LocationRepository;
 use Pterodactyl\Repositories\Eloquent\DatabaseHostRepository;
 
@@ -30,6 +32,7 @@ class ServerViewController extends Controller
         private NestRepository $nestRepository,
         private NodeRepository $nodeRepository,
         private EnvironmentService $environmentService,
+        private PluginUiConfigService $pluginUiConfigService,
     ) {
     }
 
@@ -137,6 +140,21 @@ class ServerViewController extends Controller
             'server' => $server,
             'locations' => $this->locationRepository->all(),
             'canTransfer' => $canTransfer,
+        ]);
+    }
+
+    public function plugin(Request $request, Server $server, string $plugin): View
+    {
+        $tab = $this->pluginUiConfigService->resolveAdminServerTab($plugin);
+        if (is_null($tab)) {
+            throw new NotFoundHttpException();
+        }
+
+        return view('admin.servers.view.plugin', [
+            'server' => $server,
+            'pluginId' => $plugin,
+            'pluginName' => $tab['name'],
+            'bundle' => $tab['bundle'],
         ]);
     }
 

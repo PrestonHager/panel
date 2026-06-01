@@ -3,36 +3,20 @@
 namespace Pterodactyl\Http\Controllers\Api\Client\Plugins;
 
 use Pterodactyl\Models\Plugin;
-use Pterodactyl\Plugins\Permissions;
 use Pterodactyl\Http\Controllers\Api\Client\ClientApiController;
-use Illuminate\Http\Request;
+use Pterodactyl\Services\Plugins\PluginUiConfigService;
 
 class PluginController extends ClientApiController
 {
-    public function enabled(Request $request): array
+    public function __construct(
+        private readonly PluginUiConfigService $pluginUiConfigService,
+    ) {
+        parent::__construct();
+    }
+
+    public function enabled(): array
     {
-        $plugins = Plugin::query()->where('enabled', true)->get();
-        $output = [];
-
-        foreach ($plugins as $plugin) {
-            if (!in_array(Permissions::UI_REGISTER, $plugin->permissions ?? [], true)) {
-                continue;
-            }
-
-            $ui = $plugin->ui_config ?? [];
-            if (empty($ui['server'])) {
-                continue;
-            }
-
-            $output[] = [
-                'id' => $plugin->id,
-                'ui' => [
-                    'server' => $ui['server'],
-                ],
-            ];
-        }
-
-        return ['data' => $output];
+        return ['data' => $this->pluginUiConfigService->enabledClientServerPlugins()];
     }
 
     public function permissionsCatalog(): array

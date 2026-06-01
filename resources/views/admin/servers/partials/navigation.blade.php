@@ -21,6 +21,11 @@
                     <li class="{{ $router->currentRouteNamed('admin.servers.view.database') ? 'active' : '' }}">
                         <a href="{{ route('admin.servers.view.database', $server->id) }}">Database</a>
                     </li>
+                    @foreach ($adminServerPluginTabs ?? [] as $pluginTab)
+                        <li class="{{ $router->currentRouteNamed('admin.servers.view.plugin') && request()->route('plugin') === $pluginTab['id'] ? 'active' : '' }}">
+                            <a href="{{ route('admin.servers.view.plugin', ['server' => $server->id, 'plugin' => $pluginTab['id']]) }}">{{ $pluginTab['name'] }}</a>
+                        </li>
+                    @endforeach
                     <li class="{{ $router->currentRouteNamed('admin.servers.view.mounts') ? 'active' : '' }}">
                         <a href="{{ route('admin.servers.view.mounts', $server->id) }}">Mounts</a>
                     </li>

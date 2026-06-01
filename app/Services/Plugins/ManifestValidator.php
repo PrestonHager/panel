@@ -189,6 +189,19 @@ class ManifestValidator
             }
         }
 
+        $uiAdminServer = $ui['admin']['server'] ?? null;
+        if ($uiAdminServer !== null) {
+            if (!is_array($uiAdminServer)) {
+                throw new InvalidPluginManifestException('Manifest "ui.admin.server" must be an object.');
+            }
+
+            foreach (['name', 'bundle'] as $field) {
+                if (empty($uiAdminServer[$field]) || !is_string($uiAdminServer[$field])) {
+                    throw new InvalidPluginManifestException(sprintf('ui.admin.server.%s is required.', $field));
+                }
+            }
+        }
+
         return PluginManifest::fromArray($data);
     }
 
