@@ -200,6 +200,7 @@ return [
         Pterodactyl\Providers\RouteServiceProvider::class,
         Pterodactyl\Providers\RepositoryServiceProvider::class,
         Pterodactyl\Providers\ViewComposerServiceProvider::class,
+        Pterodactyl\Providers\PluginServiceProvider::class,
 
         /*
          * Additional Dependencies

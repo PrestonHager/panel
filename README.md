@@ -15,6 +15,10 @@ Stop settling for less. Make game servers a first class citizen on your platform
 
 ![Image](https://cdn.pterodactyl.io/site-assets/pterodactyl_v1_demo.gif)
 
+## Plugins
+
+This panel includes a built-in **plugin system** for installing permission-gated PHP extensions from GitHub. See [`docs/plugins/README.md`](docs/plugins/README.md) for the manifest format, API reference, and development guide.
+
 ## Documentation
 
 * [Panel Documentation](https://pterodactyl.io/panel/1.0/getting_started.html)

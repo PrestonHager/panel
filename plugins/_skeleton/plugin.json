@@ -1,0 +1,29 @@
+{
+  "id": "com.example.my-plugin",
+  "name": "My Plugin",
+  "version": "1.0.0",
+  "entry": "Com\\Example\\MyPlugin\\Plugin",
+  "permissions": [
+    "events.subscribe",
+    "settings.read",
+    "settings.write",
+    "server.read",
+    "allocation.read",
+    "server.metadata.write",
+    "activity.log"
+  ],
+  "hooks": {
+    "server.created": "Com\\Example\\MyPlugin\\Listeners\\OnServerCreated"
+  },
+  "config": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "example_setting": {
+          "type": "string",
+          "description": "An example configuration value"
+        }
+      }
+    }
+  }
+}

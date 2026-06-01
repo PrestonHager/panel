@@ -47,7 +47,8 @@
         devShells.default = pkgs.mkShellNoCC {
           buildInputs = with pkgs; [
             composer
-            nodejs_18
+            git
+            nodejs_22
             nodePackages.pnpm
             nodePackages.yarn
             phpWithExtensions
@@ -55,6 +56,7 @@
 
           shellHook = ''
             PATH="$PATH:${pkgs.docker-compose}/libexec/docker/cli-plugins"
+            echo "Plugin tests: php artisan test --filter=Plugin"
           '';
         };
 

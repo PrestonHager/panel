@@ -1,0 +1,15 @@
+{
+  "id": "com.pterodactyl.test-plugin",
+  "name": "Test Plugin",
+  "version": "1.0.0",
+  "entry": "Pterodactyl\\TestPlugin\\Plugin",
+  "permissions": [
+    "events.subscribe",
+    "server.metadata.write",
+    "server.read",
+    "allocation.read"
+  ],
+  "hooks": {
+    "server.created": "Pterodactyl\\TestPlugin\\Listeners\\OnServerCreated"
+  }
+}

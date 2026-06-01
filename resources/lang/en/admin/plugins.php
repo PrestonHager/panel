@@ -1,0 +1,24 @@
+<?php
+
+return [
+    'title' => 'Plugins',
+    'description' => 'Install and manage permission-gated panel plugins from GitHub.',
+    'install' => 'Install Plugin',
+    'no_plugins' => 'No plugins are installed yet.',
+    'enabled' => 'Enabled',
+    'disabled' => 'Disabled',
+    'permissions' => 'Granted Permissions',
+    'source' => 'Source',
+    'version' => 'Version',
+    'enable' => 'Enable',
+    'disable' => 'Disable',
+    'uninstall' => 'Uninstall',
+    'settings' => 'Settings',
+    'github_url' => 'GitHub Repository URL',
+    'github_url_help' => 'Example: https://github.com/owner/plugin-repo or owner/plugin-repo',
+    'source_ref' => 'Branch or Tag',
+    'source_ref_help' => 'Git ref to install (defaults to main).',
+    'install_warning' => 'Only install plugins from sources you trust. Plugins run with the permissions you approve.',
+    'confirm_enable' => 'Enable this plugin with the listed permissions?',
+    'confirm_uninstall' => 'Uninstall this plugin? Its files and stored metadata will be removed.',
+];

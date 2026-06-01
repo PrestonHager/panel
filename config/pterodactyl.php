@@ -193,4 +193,24 @@ return [
     'features' => [
         'new_server_identifiers' => (bool) env('PTERODACTYL_USE_SERVER_IDENTIFIERS', false),
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Panel Plugins
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for the permission-gated plugin system.
+    |
+    */
+
+    'plugins' => [
+        'install' => [
+            'timeout' => (int) env('PTERODACTYL_PLUGIN_INSTALL_TIMEOUT', 120),
+            'max_bytes' => (int) env('PTERODACTYL_PLUGIN_MAX_BYTES', 10485760),
+        ],
+        'http' => [
+            'timeout' => (int) env('PTERODACTYL_PLUGIN_HTTP_TIMEOUT', 30),
+            'allowed_hosts' => array_filter(array_map('trim', explode(',', env('PTERODACTYL_PLUGIN_HTTP_ALLOWED_HOSTS', 'api.cloudflare.com,api.porkbun.com')))),
+        ],
+    ],
 ];

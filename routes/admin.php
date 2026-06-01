@@ -8,6 +8,28 @@ Route::get('/', [Admin\BaseController::class, 'index'])->name('admin.index');
 
 /*
 |--------------------------------------------------------------------------
+| Plugin Controller Routes
+|--------------------------------------------------------------------------
+|
+| Endpoint: /admin/plugins
+|
+*/
+Route::group(['prefix' => 'plugins'], function () {
+    Route::get('/', [Admin\Plugins\PluginController::class, 'index'])->name('admin.plugins');
+    Route::get('/install', [Admin\Plugins\PluginController::class, 'installForm'])->name('admin.plugins.install');
+    Route::post('/install', [Admin\Plugins\PluginController::class, 'install']);
+
+    Route::get('/view/{plugin}', [Admin\Plugins\PluginController::class, 'view'])->name('admin.plugins.view');
+    Route::get('/view/{plugin}/settings', [Admin\Plugins\PluginController::class, 'settings'])->name('admin.plugins.settings');
+    Route::patch('/view/{plugin}/settings', [Admin\Plugins\PluginController::class, 'updateSettings'])->name('admin.plugins.settings.update');
+
+    Route::post('/view/{plugin}/enable', [Admin\Plugins\PluginController::class, 'enable'])->name('admin.plugins.enable');
+    Route::post('/view/{plugin}/disable', [Admin\Plugins\PluginController::class, 'disable'])->name('admin.plugins.disable');
+    Route::delete('/view/{plugin}', [Admin\Plugins\PluginController::class, 'destroy'])->name('admin.plugins.destroy');
+});
+
+/*
+|--------------------------------------------------------------------------
 | Location Controller Routes
 |--------------------------------------------------------------------------
 |
