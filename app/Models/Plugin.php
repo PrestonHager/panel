@@ -13,6 +13,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $commit_sha
  * @property bool $enabled
  * @property array $permissions
+ * @property array|null $client_permissions
+ * @property array|null $ui_config
  * @property array|null $config
  * @property \Illuminate\Support\Carbon $installed_at
  * @property \Illuminate\Support\Carbon|null $created_at
@@ -35,6 +37,8 @@ class Plugin extends Model
         'commit_sha',
         'enabled',
         'permissions',
+        'client_permissions',
+        'ui_config',
         'config',
         'installed_at',
     ];
@@ -42,6 +46,8 @@ class Plugin extends Model
     protected $casts = [
         'enabled' => 'boolean',
         'permissions' => 'array',
+        'client_permissions' => 'array',
+        'ui_config' => 'array',
         'config' => 'encrypted:array',
         'installed_at' => 'datetime',
     ];
@@ -55,6 +61,8 @@ class Plugin extends Model
         'commit_sha' => 'nullable|string|max:64',
         'enabled' => 'boolean',
         'permissions' => 'required|array',
+        'client_permissions' => 'nullable|array',
+        'ui_config' => 'nullable|array',
         'config' => 'nullable|array',
     ];
 

@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useRef } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import { Subuser } from '@/state/server/subusers';
 import { Form, Formik } from 'formik';
 import { array, object, string } from 'yup';
@@ -17,6 +17,8 @@ import PermissionTitleBox from '@/components/server/users/PermissionTitleBox';
 import asModal from '@/hoc/asModal';
 import PermissionRow from '@/components/server/users/PermissionRow';
 import ModalContext from '@/context/ModalContext';
+import getPluginPermissionsCatalog, { PluginPermissionsCatalog } from '@/api/plugins/getPluginPermissionsCatalog';
+import PluginPermissionBox from '@/components/server/plugins/PluginPermissionBox';
 
 type Props = {
     subuser?: Subuser;
@@ -25,6 +27,7 @@ type Props = {
 interface Values {
     email: string;
     permissions: string[];
+    plugin_permissions: Record<string, string[]>;
 }
 
 const EditSubuserModal = ({ subuser }: Props) => {
@@ -42,6 +45,8 @@ const EditSubuserModal = ({ subuser }: Props) => {
     // that they should not need.
     const loggedInPermissions = ServerContext.useStoreState((state) => state.server.permissions);
     const [canEditUser] = usePermissions(subuser ? ['user.update'] : ['user.create']);
+    const [pluginCatalog, setPluginCatalog] = useState<PluginPermissionsCatalog>({});
+    const pluginPermissions = ServerContext.useStoreState((state) => state.server.pluginPermissions);
 
     // The permissions that can be modified by this user.
     const editablePermissions = useDeepCompareMemo(() => {
@@ -78,12 +83,29 @@ const EditSubuserModal = ({ subuser }: Props) => {
             });
     };
 
+    useEffect(() => {
+        getPluginPermissionsCatalog().then(setPluginCatalog).catch(console.error);
+    }, []);
+
     useEffect(
         () => () => {
             clearFlashes('user:edit');
         },
         []
     );
+
+    const editablePluginKeys = useDeepCompareMemo(() => {
+        if (isRootAdmin || loggedInPermissions[0] === '*') {
+            return ['*'];
+        }
+
+        const keys: string[] = [];
+        Object.entries(pluginPermissions).forEach(([pluginId, perms]) => {
+            perms.forEach((perm) => keys.push(`${pluginId}.${perm}`));
+        });
+
+        return keys;
+    }, [isRootAdmin, loggedInPermissions, pluginPermissions]);
 
     return (
         <Formik
@@ -92,6 +114,8 @@ const EditSubuserModal = ({ subuser }: Props) => {
                 {
                     email: subuser?.email || '',
                     permissions: subuser?.permissions || [],
+                    plugin_permissions: (subuser as Subuser & { plugin_permissions?: Record<string, string[]> })
+                        ?.plugin_permissions || {},
                 } as Values
             }
             validationSchema={object().shape({
@@ -102,6 +126,7 @@ const EditSubuserModal = ({ subuser }: Props) => {
                 permissions: array().of(string()),
             })}
         >
+            {({ values, setFieldValue }) => (
             <Form>
                 <div css={tw`flex justify-between`}>
                     <h2 css={tw`text-2xl`} ref={ref}>
@@ -157,6 +182,21 @@ const EditSubuserModal = ({ subuser }: Props) => {
                             </PermissionTitleBox>
                         ))}
                 </div>
+                <PluginPermissionBox
+                    catalog={pluginCatalog}
+                    values={values.plugin_permissions}
+                    editable={editablePluginKeys}
+                    onChange={(pluginId, permission, checked) => {
+                        const current = values.plugin_permissions[pluginId] || [];
+                        const next = checked
+                            ? [...current, permission]
+                            : current.filter((p) => p !== permission);
+                        setFieldValue('plugin_permissions', {
+                            ...values.plugin_permissions,
+                            [pluginId]: next,
+                        });
+                    }}
+                />
                 <Can action={subuser ? 'user.update' : 'user.create'}>
                     <div css={tw`pb-6 flex justify-end`}>
                         <Button type={'submit'} css={tw`w-full sm:w-auto`}>
@@ -165,6 +205,7 @@ const EditSubuserModal = ({ subuser }: Props) => {
                     </div>
                 </Can>
             </Form>
+            )}
         </Formik>
     );
 };

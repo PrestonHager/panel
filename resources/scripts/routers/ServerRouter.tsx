@@ -20,6 +20,29 @@ import { useLocation } from 'react-router';
 import ConflictStateRenderer from '@/components/server/ConflictStateRenderer';
 import PermissionRoute from '@/components/elements/PermissionRoute';
 import routes from '@/routers/routes';
+import getEnabledPlugins, { EnabledPlugin } from '@/api/plugins/getEnabledPlugins';
+import PluginServerTabHost from '@/plugins/host/PluginServerTabHost';
+import PluginCan from '@/components/elements/PluginCan';
+import { usePluginPermissions } from '@/plugins/usePluginPermissions';
+
+const PluginNavLink = ({
+    plugin,
+    to,
+}: {
+    plugin: EnabledPlugin;
+    to: (value: string, url?: boolean) => string;
+}) => {
+    const allowed = usePluginPermissions(plugin.id, plugin.ui.server.permission);
+    if (!allowed) {
+        return null;
+    }
+
+    return (
+        <NavLink to={to(plugin.ui.server.path, true)} exact={plugin.ui.server.exact ?? true}>
+            {plugin.ui.server.name}
+        </NavLink>
+    );
+};
 
 export default () => {
     const match = useRouteMatch<{ id: string }>();
@@ -27,6 +50,7 @@ export default () => {
 
     const rootAdmin = useStoreState((state) => state.user.data!.rootAdmin);
     const [error, setError] = useState('');
+    const [enabledPlugins, setEnabledPlugins] = useState<EnabledPlugin[]>([]);
 
     const id = ServerContext.useStoreState((state) => state.server.data?.id);
     const uuid = ServerContext.useStoreState((state) => state.server.data?.uuid);
@@ -56,6 +80,10 @@ export default () => {
             console.error(error);
             setError(httpErrorToHuman(error));
         });
+
+        getEnabledPlugins()
+            .then(setEnabledPlugins)
+            .catch((err) => console.error('Failed to load plugins', err));
 
         return () => {
             clearServerState();
@@ -91,6 +119,9 @@ export default () => {
                                             </NavLink>
                                         )
                                     )}
+                                {enabledPlugins.map((plugin) => (
+                                    <PluginNavLink key={plugin.id} plugin={plugin} to={to} />
+                                ))}
                                 {rootAdmin && (
                                     // eslint-disable-next-line react/jsx-no-target-blank
                                     <a href={`/admin/servers/view/${serverId}`} target={'_blank'}>
@@ -115,6 +146,17 @@ export default () => {
                                                 <Component />
                                             </Spinner.Suspense>
                                         </PermissionRoute>
+                                    ))}
+                                    {enabledPlugins.map((plugin) => (
+                                        <Route
+                                            key={plugin.id}
+                                            path={to(plugin.ui.server.path)}
+                                            exact={plugin.ui.server.exact ?? true}
+                                        >
+                                            <PluginCan pluginId={plugin.id} permission={plugin.ui.server.permission}>
+                                                <PluginServerTabHost plugin={plugin} />
+                                            </PluginCan>
+                                        </Route>
                                     ))}
                                     <Route path={'*'} component={NotFound} />
                                 </Switch>

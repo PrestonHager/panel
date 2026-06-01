@@ -30,6 +30,13 @@ Listeners may also be invokable classes: `__invoke(PluginContext $context, objec
 
 ## Accessors
 
+### `$context->config()`
+
+Requires `config.read`. Reads admin-configured encrypted JSON from **Plugins → Settings** (not the panel settings table).
+
+- `get(string $key, mixed $default = null)`
+- `all(): array` (never expose via HTTP)
+
 ### `$context->settings()`
 
 - `get(string $key, mixed $default = null)`

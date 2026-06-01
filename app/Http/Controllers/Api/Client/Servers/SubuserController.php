@@ -10,6 +10,7 @@ use Pterodactyl\Models\Permission;
 use Pterodactyl\Jobs\RevokeSftpAccessJob;
 use Pterodactyl\Repositories\Eloquent\SubuserRepository;
 use Pterodactyl\Services\Subusers\SubuserCreationService;
+use Pterodactyl\Services\Plugins\SubuserPluginPermissionService;
 use Pterodactyl\Transformers\Api\Client\SubuserTransformer;
 use Pterodactyl\Repositories\Wings\DaemonRevocationRepository;
 use Pterodactyl\Http\Controllers\Api\Client\ClientApiController;
@@ -27,6 +28,7 @@ class SubuserController extends ClientApiController
         private SubuserRepository $repository,
         private SubuserCreationService $creationService,
         private DaemonRevocationRepository $revocationRepository,
+        private SubuserPluginPermissionService $pluginPermissionService,
     ) {
         parent::__construct();
     }
@@ -69,12 +71,16 @@ class SubuserController extends ClientApiController
             $this->getDefaultPermissions($request)
         );
 
+        if ($request->has('plugin_permissions')) {
+            $this->pluginPermissionService->sync($response, $request->input('plugin_permissions', []));
+        }
+
         Activity::event('server:subuser.create')
             ->subject($response->user)
             ->property(['email' => $request->input('email'), 'permissions' => $this->getDefaultPermissions($request)])
             ->log();
 
-        return $this->fractal->item($response)
+        return $this->fractal->item($response->load('pluginPermissions'))
             ->transformWith($this->getTransformer(SubuserTransformer::class))
             ->toArray();
     }
@@ -117,9 +123,13 @@ class SubuserController extends ClientApiController
             });
         }
 
+        if ($request->has('plugin_permissions')) {
+            $this->pluginPermissionService->sync($subuser, $request->input('plugin_permissions', []));
+        }
+
         $log->reset();
 
-        return $this->fractal->item($subuser->refresh())
+        return $this->fractal->item($subuser->refresh()->load('pluginPermissions'))
             ->transformWith($this->getTransformer(SubuserTransformer::class))
             ->toArray();
     }

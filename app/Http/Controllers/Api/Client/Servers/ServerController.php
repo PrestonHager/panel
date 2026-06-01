@@ -5,6 +5,7 @@ namespace Pterodactyl\Http\Controllers\Api\Client\Servers;
 use Pterodactyl\Models\Server;
 use Pterodactyl\Transformers\Api\Client\ServerTransformer;
 use Pterodactyl\Services\Servers\GetUserPermissionsService;
+use Pterodactyl\Services\Plugins\GetUserPluginPermissionsService;
 use Pterodactyl\Http\Controllers\Api\Client\ClientApiController;
 use Pterodactyl\Http\Requests\Api\Client\Servers\GetServerRequest;
 
@@ -13,8 +14,10 @@ class ServerController extends ClientApiController
     /**
      * ServerController constructor.
      */
-    public function __construct(private GetUserPermissionsService $permissionsService)
-    {
+    public function __construct(
+        private GetUserPermissionsService $permissionsService,
+        private GetUserPluginPermissionsService $pluginPermissionsService,
+    ) {
         parent::__construct();
     }
 
@@ -29,6 +32,7 @@ class ServerController extends ClientApiController
             ->addMeta([
                 'is_server_owner' => $request->user()->id === $server->owner_id,
                 'user_permissions' => $this->permissionsService->handle($server, $request->user()),
+                'plugin_permissions' => $this->pluginPermissionsService->handle($server, $request->user()),
             ])
             ->toArray();
     }

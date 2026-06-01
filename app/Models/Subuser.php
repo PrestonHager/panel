@@ -73,6 +73,11 @@ class Subuser extends Model
         return $this->belongsTo(Server::class);
     }
 
+    public function pluginPermissions(): HasMany
+    {
+        return $this->hasMany(SubuserPluginPermission::class);
+    }
+
     /**
      * Gets the user associated with a subuser.
      *

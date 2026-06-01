@@ -38,6 +38,7 @@ export interface Subuser {
     twoFactorEnabled: boolean;
     createdAt: Date;
     permissions: SubuserPermission[];
+    plugin_permissions?: Record<string, string[]>;
 
     can(permission: SubuserPermission): boolean;
 }

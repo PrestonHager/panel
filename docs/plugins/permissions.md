@@ -14,6 +14,13 @@ Plugins declare permissions in `plugin.json`. The panel stores the approved list
 | `server.metadata.write` | Write rows in `plugin_data` for servers |
 | `http.request` | Outbound HTTP to allowlisted hosts |
 | `activity.log` | Write `plugin:{id}:*` activity log events |
+| `config.read` | Read admin-configured plugin config (encrypted JSON) |
+| `api.serve` | Register HTTP routes under `/api/plugins/{id}` |
+| `ui.register` | Expose plugin UI tabs and static assets to the client SPA |
+
+## Client permissions (plugin-defined)
+
+Plugins also declare **client permissions** in `clientPermissions` for subusers and HTTP routes. See [plugin-client-permissions.md](plugin-client-permissions.md).
 
 ## Guidelines
 

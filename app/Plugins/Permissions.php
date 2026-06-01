@@ -20,6 +20,12 @@ final class Permissions
 
     public const ACTIVITY_LOG = 'activity.log';
 
+    public const CONFIG_READ = 'config.read';
+
+    public const API_SERVE = 'api.serve';
+
+    public const UI_REGISTER = 'ui.register';
+
     public const ALL = [
         self::EVENTS_SUBSCRIBE,
         self::SETTINGS_READ,
@@ -29,6 +35,16 @@ final class Permissions
         self::SERVER_METADATA_WRITE,
         self::HTTP_REQUEST,
         self::ACTIVITY_LOG,
+        self::CONFIG_READ,
+        self::API_SERVE,
+        self::UI_REGISTER,
+    ];
+
+    public const RESERVED_CLIENT_PERMISSIONS = [
+        'admin',
+        'panel',
+        'root',
+        '*',
     ];
 
     public static function isValid(string $permission): bool
@@ -50,6 +66,9 @@ final class Permissions
             self::SERVER_METADATA_WRITE => 'Store plugin-owned metadata attached to servers.',
             self::HTTP_REQUEST => 'Make outbound HTTP requests to allowlisted hosts.',
             self::ACTIVITY_LOG => 'Write entries to the panel activity log.',
+            self::CONFIG_READ => 'Read admin-configured plugin configuration (encrypted JSON).',
+            self::API_SERVE => 'Register HTTP API routes under /api/plugins/{id}.',
+            self::UI_REGISTER => 'Expose plugin UI tabs and assets to the client SPA.',
         ];
     }
 }

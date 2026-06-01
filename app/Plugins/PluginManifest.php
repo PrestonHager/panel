@@ -7,6 +7,9 @@ final readonly class PluginManifest
     /**
      * @param string[] $permissions
      * @param array<string, string> $hooks
+     * @param array<string, string> $clientPermissions
+     * @param array<int, array{method: string, path: string, handler: string, permission?: string}> $apiRoutes
+     * @param array<string, mixed> $ui
      * @param array<string, mixed> $configSchema
      */
     public function __construct(
@@ -16,6 +19,10 @@ final readonly class PluginManifest
         public string $entry,
         public array $permissions,
         public array $hooks,
+        public array $clientPermissions = [],
+        public array $apiRoutes = [],
+        public array $ui = [],
+        public ?string $requiresPanelPluginApi = null,
         public array $configSchema = [],
     ) {
     }
@@ -25,6 +32,19 @@ final readonly class PluginManifest
      */
     public static function fromArray(array $data): self
     {
+        $apiRoutes = [];
+        foreach ($data['api']['routes'] ?? [] as $route) {
+            if (!is_array($route)) {
+                continue;
+            }
+            $apiRoutes[] = [
+                'method' => (string) ($route['method'] ?? ''),
+                'path' => (string) ($route['path'] ?? ''),
+                'handler' => (string) ($route['handler'] ?? ''),
+                'permission' => isset($route['permission']) ? (string) $route['permission'] : null,
+            ];
+        }
+
         return new self(
             id: (string) $data['id'],
             name: (string) $data['name'],
@@ -32,6 +52,10 @@ final readonly class PluginManifest
             entry: (string) $data['entry'],
             permissions: array_values($data['permissions'] ?? []),
             hooks: $data['hooks'] ?? [],
+            clientPermissions: $data['clientPermissions'] ?? [],
+            apiRoutes: $apiRoutes,
+            ui: $data['ui'] ?? [],
+            requiresPanelPluginApi: $data['requires']['panelPluginApi'] ?? null,
             configSchema: $data['config']['schema'] ?? [],
         );
     }
@@ -42,5 +66,12 @@ final readonly class PluginManifest
         array_pop($parts);
 
         return implode('\\', $parts) . '\\';
+    }
+
+    public function uiServer(): ?array
+    {
+        $server = $this->ui['server'] ?? null;
+
+        return is_array($server) ? $server : null;
     }
 }

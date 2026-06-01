@@ -16,6 +16,9 @@ class UpdateSubuserRequest extends SubuserRequest
         return [
             'permissions' => 'required|array',
             'permissions.*' => 'string',
+            'plugin_permissions' => 'nullable|array',
+            'plugin_permissions.*' => 'array',
+            'plugin_permissions.*.*' => 'string',
         ];
     }
 }

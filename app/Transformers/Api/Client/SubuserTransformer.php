@@ -3,6 +3,7 @@
 namespace Pterodactyl\Transformers\Api\Client;
 
 use Pterodactyl\Models\Subuser;
+use Pterodactyl\Services\Plugins\SubuserPluginPermissionService;
 
 class SubuserTransformer extends BaseClientTransformer
 {
@@ -21,9 +22,16 @@ class SubuserTransformer extends BaseClientTransformer
      */
     public function transform(Subuser $model): array
     {
+        $pluginPermissions = app(SubuserPluginPermissionService::class)->forSubuser(
+            $model->relationLoaded('pluginPermissions') ? $model : $model->load('pluginPermissions')
+        );
+
         return array_merge(
             $this->makeTransformer(UserTransformer::class)->transform($model->user),
-            ['permissions' => $model->permissions]
+            [
+                'permissions' => $model->permissions,
+                'plugin_permissions' => $pluginPermissions,
+            ]
         );
     }
 }

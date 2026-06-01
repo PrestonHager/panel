@@ -91,7 +91,7 @@ export const rawDataToServerObject = ({ attributes: data }: FractalResponseData)
     ),
 });
 
-export default (uuid: string): Promise<[Server, string[]]> => {
+export default (uuid: string): Promise<[Server, string[], Record<string, string[]>]> => {
     return new Promise((resolve, reject) => {
         http.get(`/api/client/servers/${uuid}`)
             .then(({ data }) =>
@@ -99,6 +99,7 @@ export default (uuid: string): Promise<[Server, string[]]> => {
                     rawDataToServerObject(data),
                     // eslint-disable-next-line camelcase
                     data.meta?.is_server_owner ? ['*'] : data.meta?.user_permissions || [],
+                    data.meta?.plugin_permissions || {},
                 ])
             )
             .catch(reject);

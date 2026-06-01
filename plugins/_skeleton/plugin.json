@@ -3,6 +3,9 @@
   "name": "My Plugin",
   "version": "1.0.0",
   "entry": "Com\\Example\\MyPlugin\\Plugin",
+  "requires": {
+    "panelPluginApi": "2.0"
+  },
   "permissions": [
     "events.subscribe",
     "settings.read",
@@ -10,10 +13,28 @@
     "server.read",
     "allocation.read",
     "server.metadata.write",
-    "activity.log"
+    "activity.log",
+    "config.read",
+    "api.serve",
+    "ui.register"
   ],
+  "clientPermissions": {
+    "example.read": "View example data"
+  },
   "hooks": {
     "server.created": "Com\\Example\\MyPlugin\\Listeners\\OnServerCreated"
+  },
+  "api": {
+    "routes": []
+  },
+  "ui": {
+    "server": {
+      "path": "/my-plugin",
+      "name": "My Plugin",
+      "bundle": "assets/plugin.js",
+      "permission": "example.read",
+      "exact": true
+    }
   },
   "config": {
     "schema": {

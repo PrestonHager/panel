@@ -3,6 +3,7 @@
 namespace Pterodactyl\Plugins;
 
 use Pterodactyl\Plugins\Accessors\ActivityAccessor;
+use Pterodactyl\Plugins\Accessors\ConfigAccessor;
 use Pterodactyl\Plugins\Accessors\HttpClientAccessor;
 use Pterodactyl\Plugins\Accessors\PluginDataAccessor;
 use Pterodactyl\Plugins\Accessors\ServerAccessor;
@@ -14,6 +15,7 @@ class PluginContext
         private readonly string $pluginId,
         private readonly PermissionGate $gate,
         private readonly SettingsAccessor $settings,
+        private readonly ConfigAccessor $config,
         private readonly ServerAccessor $servers,
         private readonly PluginDataAccessor $data,
         private readonly HttpClientAccessor $http,
@@ -34,6 +36,11 @@ class PluginContext
     public function settings(): SettingsAccessor
     {
         return $this->settings;
+    }
+
+    public function config(): ConfigAccessor
+    {
+        return $this->config;
     }
 
     public function servers(): ServerAccessor

@@ -15,15 +15,18 @@ interface ServerDataStore {
     inConflictState: Computed<ServerDataStore, boolean>;
     isInstalling: Computed<ServerDataStore, boolean>;
     permissions: string[];
+    pluginPermissions: Record<string, string[]>;
 
     getServer: Thunk<ServerDataStore, string, Record<string, unknown>, ServerStore, Promise<void>>;
     setServer: Action<ServerDataStore, Server>;
     setServerFromState: Action<ServerDataStore, (s: Server) => Server>;
     setPermissions: Action<ServerDataStore, string[]>;
+    setPluginPermissions: Action<ServerDataStore, Record<string, string[]>>;
 }
 
 const server: ServerDataStore = {
     permissions: [],
+    pluginPermissions: {},
 
     inConflictState: computed((state) => {
         if (!state.data) {
@@ -38,10 +41,11 @@ const server: ServerDataStore = {
     }),
 
     getServer: thunk(async (actions, payload) => {
-        const [server, permissions] = await getServer(payload);
+        const [server, permissions, pluginPermissions] = await getServer(payload);
 
         actions.setServer(server);
         actions.setPermissions(permissions);
+        actions.setPluginPermissions(pluginPermissions);
     }),
 
     setServer: action((state, payload) => {
@@ -60,6 +64,12 @@ const server: ServerDataStore = {
     setPermissions: action((state, payload) => {
         if (!isEqual(payload, state.permissions)) {
             state.permissions = payload;
+        }
+    }),
+
+    setPluginPermissions: action((state, payload) => {
+        if (!isEqual(payload, state.pluginPermissions)) {
+            state.pluginPermissions = payload;
         }
     }),
 };

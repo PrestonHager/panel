@@ -5,6 +5,7 @@ namespace Pterodactyl\Services\Plugins;
 use Pterodactyl\Models\Plugin;
 use Pterodactyl\Facades\Activity;
 use Pterodactyl\Plugins\Permissions;
+use Pterodactyl\Plugins\PluginManifest;
 use Pterodactyl\Plugins\Contracts\PluginInterface;
 use Pterodactyl\Plugins\Exceptions\PluginException;
 
@@ -21,18 +22,17 @@ class PluginManager
         $result = $this->installer->install($url, $ref);
         $manifest = $result['manifest'];
 
-        $plugin = Plugin::query()->create([
-            'id' => $manifest->id,
-            'name' => $manifest->name,
-            'version' => $manifest->version,
-            'source_url' => $result['source_url'],
-            'source_ref' => $result['source_ref'],
-            'commit_sha' => $result['commit_sha'],
-            'enabled' => false,
-            'permissions' => $manifest->permissions,
-            'config' => [],
-            'installed_at' => now(),
-        ]);
+        $plugin = Plugin::query()->create(array_merge(
+            $this->attributesFromManifest($manifest),
+            [
+                'source_url' => $result['source_url'],
+                'source_ref' => $result['source_ref'],
+                'commit_sha' => $result['commit_sha'],
+                'enabled' => false,
+                'config' => [],
+                'installed_at' => now(),
+            ]
+        ));
 
         Activity::event('plugin:install')
             ->property('plugin_id', $plugin->id)
@@ -50,17 +50,17 @@ class PluginManager
 
         return Plugin::query()->updateOrCreate(
             ['id' => $manifest->id],
-            [
-                'name' => $manifest->name,
-                'version' => $manifest->version,
-                'source_url' => $result['source_url'],
-                'source_ref' => $result['source_ref'],
-                'commit_sha' => $result['commit_sha'],
-                'enabled' => false,
-                'permissions' => $manifest->permissions,
-                'config' => [],
-                'installed_at' => now(),
-            ]
+            array_merge(
+                $this->attributesFromManifest($manifest),
+                [
+                    'source_url' => $result['source_url'],
+                    'source_ref' => $result['source_ref'],
+                    'commit_sha' => $result['commit_sha'],
+                    'enabled' => false,
+                    'config' => [],
+                    'installed_at' => now(),
+                ]
+            )
         );
     }
 
@@ -127,6 +127,21 @@ class PluginManager
         $plugin->save();
 
         return $plugin->fresh();
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function attributesFromManifest(PluginManifest $manifest): array
+    {
+        return [
+            'id' => $manifest->id,
+            'name' => $manifest->name,
+            'version' => $manifest->version,
+            'permissions' => $manifest->permissions,
+            'client_permissions' => $manifest->clientPermissions,
+            'ui_config' => $manifest->ui,
+        ];
     }
 
     private function assertEntryClassValid(Plugin $plugin): void

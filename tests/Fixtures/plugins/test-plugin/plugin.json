@@ -3,13 +3,41 @@
   "name": "Test Plugin",
   "version": "1.0.0",
   "entry": "Pterodactyl\\TestPlugin\\Plugin",
+  "requires": {
+    "panelPluginApi": "2.0"
+  },
   "permissions": [
     "events.subscribe",
     "server.metadata.write",
     "server.read",
-    "allocation.read"
+    "allocation.read",
+    "config.read",
+    "api.serve",
+    "ui.register"
   ],
+  "clientPermissions": {
+    "records.read": "View test records"
+  },
   "hooks": {
     "server.created": "Pterodactyl\\TestPlugin\\Listeners\\OnServerCreated"
+  },
+  "api": {
+    "routes": [
+      {
+        "method": "GET",
+        "path": "/servers/{server}/records",
+        "handler": "Pterodactyl\\TestPlugin\\Http\\RecordsController@index",
+        "permission": "records.read"
+      }
+    ]
+  },
+  "ui": {
+    "server": {
+      "path": "/test-plugin",
+      "name": "Test Plugin",
+      "bundle": "assets/test.js",
+      "permission": "records.read",
+      "exact": true
+    }
   }
 }

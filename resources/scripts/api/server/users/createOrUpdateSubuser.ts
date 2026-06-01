@@ -5,6 +5,7 @@ import { Subuser } from '@/state/server/subusers';
 interface Params {
     email: string;
     permissions: string[];
+    plugin_permissions?: Record<string, string[]>;
 }
 
 export default (uuid: string, params: Params, subuser?: Subuser): Promise<Subuser> => {
