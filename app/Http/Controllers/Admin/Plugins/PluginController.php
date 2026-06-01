@@ -115,6 +115,26 @@ class PluginController extends Controller
         return redirect()->route('admin.plugins.view', ['plugin' => $plugin->id]);
     }
 
+    public function update(Plugin $plugin): RedirectResponse
+    {
+        try {
+            $plugin = $this->pluginManager->updateFromGithub($plugin);
+        } catch (PluginException $exception) {
+            $this->alert->danger($exception->getMessage())->flash();
+
+            return redirect()->route('admin.plugins.view', ['plugin' => $plugin->id]);
+        }
+
+        $this->alert->success(sprintf(
+            'Plugin "%s" was updated from %s (%s).',
+            $plugin->name,
+            $plugin->source_url,
+            $plugin->source_ref
+        ))->flash();
+
+        return redirect()->route('admin.plugins.view', ['plugin' => $plugin->id]);
+    }
+
     public function disable(Plugin $plugin): RedirectResponse
     {
         $this->pluginManager->disable($plugin);

@@ -64,6 +64,40 @@ class PluginManager
         );
     }
 
+    public function updateFromGithub(Plugin $plugin, ?string $ref = null): Plugin
+    {
+        $ref = $ref ?: ($plugin->source_ref ?: 'main');
+        $wasEnabled = $plugin->enabled;
+
+        if ($wasEnabled) {
+            $this->disable($plugin);
+            $plugin = $plugin->fresh();
+        }
+
+        $result = $this->installer->update($plugin->source_url, $ref, $plugin->id);
+        $plugin->fill(array_merge(
+            $this->attributesFromManifest($result['manifest']),
+            [
+                'commit_sha' => $result['commit_sha'],
+                'source_url' => $result['source_url'],
+                'source_ref' => $result['source_ref'],
+            ]
+        ));
+        $plugin->save();
+
+        Activity::event('plugin:update')
+            ->property('plugin_id', $plugin->id)
+            ->property('version', $plugin->version)
+            ->property('commit_sha', $plugin->commit_sha)
+            ->log();
+
+        if ($wasEnabled) {
+            return $this->enable($plugin->fresh());
+        }
+
+        return $plugin->fresh();
+    }
+
     public function enable(Plugin $plugin): Plugin
     {
         if ($plugin->enabled) {

@@ -1,5 +1,15 @@
 <?php
 
+use Illuminate\Support\Str;
+
+$proxies = env('TRUSTED_PROXIES');
+
+// Panels with https:// APP_URL are almost always behind a reverse proxy. Default to
+// trusting proxies when unset so URL generation and scheme detection do not loop.
+if ($proxies === null && Str::startsWith((string) env('APP_URL', ''), 'https://')) {
+    $proxies = '*';
+}
+
 return [
     /*
      * Set trusted proxy IP addresses.
@@ -23,6 +33,7 @@ return [
      * how many proxies that client's request has
      * subsequently passed through.
      */
-    'proxies' => in_array(env('TRUSTED_PROXIES', []), ['*', '**']) ?
-        env('TRUSTED_PROXIES') : explode(',', env('TRUSTED_PROXIES') ?? ''),
+    'proxies' => in_array($proxies, ['*', '**'], true)
+        ? $proxies
+        : array_values(array_filter(array_map('trim', explode(',', (string) $proxies)))),
 ];

@@ -57,6 +57,56 @@ class GitHubPluginInstaller
     }
 
     /**
+     * @return array{manifest: PluginManifest, commit_sha: ?string, source_url: string, source_ref: string}
+     */
+    public function update(string $githubUrl, string $ref, string $expectedPluginId): array
+    {
+        [$owner, $repo, $ref] = $this->parseGithubUrl($githubUrl, $ref);
+        $sourceUrl = sprintf('https://github.com/%s/%s', $owner, $repo);
+
+        $tmp = storage_path('app/plugins/.tmp/' . Str::uuid());
+        if (!is_dir(dirname($tmp))) {
+            mkdir(dirname($tmp), 0755, true);
+        }
+
+        try {
+            $this->cloneRepository($owner, $repo, $ref, $tmp);
+            $this->assertRepositorySize($tmp);
+
+            $manifest = $this->validator->readFromDirectory($tmp);
+            if ($manifest->id !== $expectedPluginId) {
+                throw new PluginException(sprintf(
+                    'Updated repository manifest ID "%s" does not match installed plugin "%s".',
+                    $manifest->id,
+                    $expectedPluginId
+                ));
+            }
+
+            $commitSha = $this->resolveCommitSha($tmp);
+            $target = PluginRegistry::directoryFor($manifest->id);
+
+            if (is_dir($target)) {
+                $this->removeDirectory($target);
+            }
+
+            if (!is_dir(dirname($target))) {
+                mkdir(dirname($target), 0755, true);
+            }
+
+            $this->moveDirectory($tmp, $target);
+
+            return [
+                'manifest' => $manifest,
+                'commit_sha' => $commitSha,
+                'source_url' => $sourceUrl,
+                'source_ref' => $ref,
+            ];
+        } finally {
+            $this->removeDirectory($tmp);
+        }
+    }
+
+    /**
      * @return array{manifest: PluginManifest, commit_sha: null, source_url: string, source_ref: string}
      */
     public function installFromPath(string $sourcePath): array

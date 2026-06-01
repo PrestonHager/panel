@@ -24,6 +24,7 @@ Route::group(['prefix' => 'plugins'], function () {
     Route::patch('/view/{plugin}/settings', [Admin\Plugins\PluginController::class, 'updateSettings'])->name('admin.plugins.settings.update');
 
     Route::post('/view/{plugin}/enable', [Admin\Plugins\PluginController::class, 'enable'])->name('admin.plugins.enable');
+    Route::post('/view/{plugin}/update', [Admin\Plugins\PluginController::class, 'update'])->name('admin.plugins.update');
     Route::post('/view/{plugin}/disable', [Admin\Plugins\PluginController::class, 'disable'])->name('admin.plugins.disable');
     Route::delete('/view/{plugin}', [Admin\Plugins\PluginController::class, 'destroy'])->name('admin.plugins.destroy');
 });

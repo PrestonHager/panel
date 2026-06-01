@@ -34,13 +34,7 @@
                         </tr>
                         @foreach($keys as $key)
                             <tr>
-                                <td><code>
-                                    @if (Auth::user()->is($key->user))
-                                        {{ $key->identifier . decrypt($key->token) }}
-                                    @else
-                                        {{ $key->identifier . '****' }}
-                                    @endif
-                                </code></td>
+                                <td><code>{{ $key->display_token }}</code></td>
                                 <td>{{ $key->memo }}</td>
                                 <td>
                                     @if(!is_null($key->last_used_at))
@@ -51,7 +45,11 @@
                                 </td>
                                 <td>@datetimeHuman($key->created_at)</td>
                                 <td>
-                                    <a href="{{ route('admin.users.view', $key->user->id) }}">{{ $key->user->username }}</a>
+                                    @if ($key->user)
+                                        <a href="{{ route('admin.users.view', $key->user->id) }}">{{ $key->user->username }}</a>
+                                    @else
+                                        &mdash;
+                                    @endif
                                 </td>
                                 <td>
                                     <a href="#" data-action="revoke-key" data-attr="{{ $key->identifier }}">

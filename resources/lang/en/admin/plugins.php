@@ -11,6 +11,7 @@ return [
     'source' => 'Source',
     'version' => 'Version',
     'enable' => 'Enable',
+    'update' => 'Update from GitHub',
     'disable' => 'Disable',
     'uninstall' => 'Uninstall',
     'settings' => 'Settings',
@@ -20,5 +21,6 @@ return [
     'source_ref_help' => 'Git ref to install (defaults to main).',
     'install_warning' => 'Only install plugins from sources you trust. Plugins run with the permissions you approve.',
     'confirm_enable' => 'Enable this plugin with the listed permissions?',
+    'confirm_update' => 'Pull the latest plugin files from GitHub? The plugin will be briefly disabled and re-enabled if it is currently active.',
     'confirm_uninstall' => 'Uninstall this plugin? Its files and stored metadata will be removed.',
 ];

@@ -16,6 +16,8 @@ return new class extends Migration {
             $table->string('commit_sha', 64)->nullable();
             $table->boolean('enabled')->default(false);
             $table->json('permissions');
+            $table->json('client_permissions')->nullable();
+            $table->json('ui_config')->nullable();
             $table->text('config')->nullable();
             $table->timestamp('installed_at')->useCurrent();
             $table->timestamps();

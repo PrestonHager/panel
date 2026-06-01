@@ -47,7 +47,21 @@ class PluginUiConfigService
             ];
         }
 
-        return $this->readManifestAdminServerUi($plugin);
+        $fromManifest = $this->readManifestAdminServerUi($plugin);
+        if (!is_null($fromManifest)) {
+            return $fromManifest;
+        }
+
+        // Fall back to client server UI so plugins only declaring ui.server still get an admin tab.
+        $server = $this->serverUiFor($plugin);
+        if (is_array($server) && !empty($server['name']) && !empty($server['bundle'])) {
+            return [
+                'name' => (string) $server['name'],
+                'bundle' => (string) $server['bundle'],
+            ];
+        }
+
+        return null;
     }
 
     /**

@@ -6,6 +6,7 @@ use Illuminate\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Pterodactyl\Models\ApiKey;
+use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Http\RedirectResponse;
 use Prologue\Alerts\AlertsMessageBag;
 use Pterodactyl\Services\Acl\Api\AdminAcl;
@@ -29,9 +30,32 @@ class ApiController extends Controller
      */
     public function index(Request $request): View
     {
+        $keys = ApiKey::query()
+            ->where('key_type', ApiKey::TYPE_APPLICATION)
+            ->with('user')
+            ->get()
+            ->map(function (ApiKey $key) use ($request) {
+                $key->setAttribute('display_token', $this->displayTokenFor($request->user(), $key));
+
+                return $key;
+            });
+
         return view('admin.api.index', [
-            'keys' => ApiKey::query()->where('key_type', ApiKey::TYPE_APPLICATION)->get(),
+            'keys' => $keys,
         ]);
+    }
+
+    private function displayTokenFor(?\Pterodactyl\Models\User $viewer, ApiKey $key): string
+    {
+        if (is_null($viewer) || is_null($key->user) || !$viewer->is($key->user)) {
+            return $key->identifier . '****';
+        }
+
+        try {
+            return $key->identifier . decrypt($key->token);
+        } catch (DecryptException) {
+            return $key->identifier . '[decryption failed]';
+        }
     }
 
     /**

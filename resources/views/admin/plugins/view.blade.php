@@ -45,6 +45,10 @@
                     </dl>
                 </div>
                 <div class="box-footer">
+                    <form method="POST" action="{{ route('admin.plugins.update', $plugin) }}" style="display:inline" onsubmit="return confirm('@lang('admin/plugins.confirm_update')')">
+                        @csrf
+                        <button type="submit" class="btn btn-primary">@lang('admin/plugins.update')</button>
+                    </form>
                     @if($plugin->enabled)
                         <form method="POST" action="{{ route('admin.plugins.disable', $plugin) }}" style="display:inline">
                             @csrf
