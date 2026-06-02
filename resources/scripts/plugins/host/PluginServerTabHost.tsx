@@ -26,10 +26,15 @@ export default ({ plugin }: Props) => {
         setError('');
         setLoaded(false);
 
+        const csrfMeta =
+            document.querySelector('meta[name="csrf-token"]') ||
+            document.querySelector('meta[name="_token"]');
+
         loadPluginBundle(plugin.id, plugin.ui.server.bundle, {
             pluginId: plugin.id,
             serverUuid: uuid,
             apiBase: `/api/plugins/${plugin.id}`,
+            csrfToken: csrfMeta?.getAttribute('content') || undefined,
             getPermissions: () => pluginPermissions[plugin.id] || [],
         })
             .then(() => {

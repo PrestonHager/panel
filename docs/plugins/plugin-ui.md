@@ -51,4 +51,7 @@ window.PterodactylPlugin_com_example_dns = function () {
 - `pluginId`
 - `serverUuid`
 - `apiBase` (e.g. `/api/plugins/com.example.dns`)
+- `csrfToken` (required for session-authenticated POST/PUT/DELETE; admin views pass this from Blade)
 - `getPermissions()`
+
+Mutating API calls must send `X-CSRF-TOKEN` and `X-Requested-With: XMLHttpRequest` with `credentials: 'same-origin'`.

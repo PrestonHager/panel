@@ -2,7 +2,20 @@ export interface PluginBundleContext {
     pluginId: string;
     serverUuid: string;
     apiBase: string;
+    csrfToken?: string;
     getPermissions: () => string[];
+}
+
+function resolveCsrfToken(explicit?: string): string | undefined {
+    if (explicit) {
+        return explicit;
+    }
+
+    const meta =
+        document.querySelector('meta[name="csrf-token"]') ||
+        document.querySelector('meta[name="_token"]');
+
+    return meta?.getAttribute('content') || undefined;
 }
 
 declare global {
@@ -13,7 +26,10 @@ declare global {
 
 export default (pluginId: string, bundle: string, context: PluginBundleContext): Promise<void> => {
     return new Promise((resolve, reject) => {
-        window.__PterodactylPluginContext = context;
+        window.__PterodactylPluginContext = {
+            ...context,
+            csrfToken: resolveCsrfToken(context.csrfToken),
+        };
 
         const scriptId = `plugin-bundle-${pluginId}`;
         if (document.getElementById(scriptId)) {
