@@ -1,0 +1,277 @@
+/**
+ * Shared styles for plugin UI bundles (client server tabs and admin server views).
+ * Matches Pterodactyl panel button/input colors (Tailwind theme).
+ */
+
+.ptero-plugin {
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #e5e7eb;
+}
+
+.ptero-plugin--on-light {
+    color: #374151;
+}
+
+.ptero-plugin h2 {
+    margin: 0 0 1rem;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #f9fafb;
+}
+
+.ptero-plugin--on-light h2 {
+    color: #111827;
+}
+
+.ptero-plugin h3,
+.ptero-plugin h4 {
+    margin: 0 0 0.75rem;
+    font-weight: 600;
+    color: #f3f4f6;
+}
+
+.ptero-plugin--on-light h3,
+.ptero-plugin--on-light h4 {
+    color: #1f2937;
+}
+
+.ptero-plugin p {
+    margin: 0.25rem 0 0.75rem;
+    color: #9ca3af;
+}
+
+.ptero-plugin--on-light p {
+    color: #6b7280;
+}
+
+.ptero-plugin code {
+    color: #d1d5db;
+    background: #374151;
+    padding: 0.1rem 0.35rem;
+    border-radius: 3px;
+    font-size: 0.85em;
+}
+
+.ptero-plugin--on-light code {
+    color: #374151;
+    background: #f3f4f6;
+}
+
+.ptero-plugin-box {
+    background: #262626;
+    border: 1px solid #404040;
+    border-radius: 6px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.25rem;
+}
+
+.ptero-plugin--on-light .ptero-plugin-box {
+    background: #fff;
+    border-color: #d2d6de;
+}
+
+.ptero-plugin-panel {
+    background: #171717;
+    border: 1px solid #525252;
+    border-radius: 6px;
+    padding: 1rem 1.25rem;
+    margin: 1rem 0;
+}
+
+.ptero-plugin--on-light .ptero-plugin-panel {
+    background: #f9fafb;
+    border-color: #d2d6de;
+}
+
+.ptero-plugin-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+.ptero-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.25;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 100ms ease;
+}
+
+.ptero-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.ptero-btn--primary {
+    background: #2563eb;
+    color: #eff6ff;
+}
+
+.ptero-btn--primary:hover:not(:disabled) {
+    background: #3b82f6;
+}
+
+.ptero-btn--primary:active:not(:disabled) {
+    background: #1d4ed8;
+}
+
+.ptero-btn--secondary {
+    background: #6b7280;
+    color: #f9fafb;
+}
+
+.ptero-btn--secondary:hover:not(:disabled) {
+    background: #9ca3af;
+}
+
+.ptero-btn--danger {
+    background: #dc2626;
+    color: #fef2f2;
+}
+
+.ptero-btn--danger:hover:not(:disabled) {
+    background: #ef4444;
+}
+
+.ptero-btn--sm {
+    padding: 0.3rem 0.65rem;
+    font-size: 0.8rem;
+}
+
+.ptero-label {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #d1d5db;
+}
+
+.ptero-plugin--on-light .ptero-label {
+    color: #4b5563;
+}
+
+.ptero-field {
+    margin-bottom: 0.75rem;
+}
+
+.ptero-input,
+.ptero-select {
+    display: block;
+    width: 100%;
+    max-width: 360px;
+    padding: 0.5rem 1rem;
+    font-size: 14px;
+    border-radius: 4px;
+    border: 0;
+    outline: none;
+    background: #262626;
+    color: #f9fafb;
+    box-shadow: 0 0 0 1px transparent;
+}
+
+.ptero-plugin--on-light .ptero-input,
+.ptero-plugin--on-light .ptero-select {
+    background: #fff;
+    color: #111827;
+    border: 1px solid #d1d5db;
+}
+
+.ptero-input:focus,
+.ptero-select:focus {
+    box-shadow: 0 0 0 4px rgba(147, 197, 253, 0.75);
+}
+
+.ptero-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 0.75rem;
+}
+
+.ptero-table th,
+.ptero-table td {
+    border: 1px solid #404040;
+    padding: 0.55rem 0.65rem;
+    text-align: left;
+}
+
+.ptero-table th {
+    background: #404040;
+    color: #f9fafb;
+    font-weight: 600;
+    font-size: 0.8rem;
+}
+
+.ptero-table td {
+    background: #262626;
+    color: #e5e7eb;
+}
+
+.ptero-plugin--on-light .ptero-table th,
+.ptero-plugin--on-light .ptero-table td {
+    border-color: #d2d6de;
+}
+
+.ptero-plugin--on-light .ptero-table th {
+    background: #f4f4f5;
+    color: #111827;
+}
+
+.ptero-plugin--on-light .ptero-table td {
+    background: #fff;
+    color: #374151;
+}
+
+.ptero-muted {
+    color: #9ca3af;
+    font-style: italic;
+}
+
+.ptero-plugin--on-light .ptero-muted {
+    color: #6b7280;
+}
+
+.ptero-alert {
+    border-radius: 4px;
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.ptero-alert--danger {
+    color: #fecaca;
+    background: #450a0a;
+    border: 1px solid #7f1d1d;
+}
+
+.ptero-plugin--on-light .ptero-alert--danger {
+    color: #991b1b;
+    background: #fef2f2;
+    border-color: #fecaca;
+}
+
+.ptero-profile-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0.35rem 0;
+}
+
+.ptero-profile-row input[type='checkbox'] {
+    width: auto;
+    max-width: none;
+    accent-color: #2563eb;
+}
+
+.ptero-profile-row label {
+    margin: 0;
+    cursor: pointer;
+    color: inherit;
+}

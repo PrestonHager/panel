@@ -1,9 +1,12 @@
+import ensurePluginHostStyles from '@/plugins/host/ensurePluginHostStyles';
+
 export interface PluginBundleContext {
     pluginId: string;
     serverUuid: string;
     apiBase: string;
     csrfToken?: string;
     getPermissions: () => string[];
+    hasFullAccess?: () => boolean;
 }
 
 function resolveCsrfToken(explicit?: string): string | undefined {
@@ -24,26 +27,60 @@ declare global {
     }
 }
 
+function mountKey(pluginId: string): string {
+    return `PterodactylPlugin_${pluginId.replace(/\./g, '_')}`;
+}
+
 export default (pluginId: string, bundle: string, context: PluginBundleContext): Promise<void> => {
-    return new Promise((resolve, reject) => {
-        window.__PterodactylPluginContext = {
-            ...context,
-            csrfToken: resolveCsrfToken(context.csrfToken),
-        };
+    window.__PterodactylPluginContext = {
+        ...context,
+        csrfToken: resolveCsrfToken(context.csrfToken),
+    };
 
-        const scriptId = `plugin-bundle-${pluginId}`;
-        if (document.getElementById(scriptId)) {
-            resolve();
+    const scriptId = `plugin-bundle-${pluginId}`;
 
-            return;
-        }
+    return ensurePluginHostStyles().then(
+        () =>
+            new Promise((resolve, reject) => {
+                const runMount = () => {
+                    const mount = (window as unknown as Record<string, (() => void) | undefined>)[mountKey(pluginId)];
 
-        const script = document.createElement('script');
-        script.id = scriptId;
-        script.src = `/plugins-assets/${pluginId}/${bundle.replace(/^\//, '')}`;
-        script.async = true;
-        script.onload = () => resolve();
-        script.onerror = () => reject(new Error(`Failed to load plugin bundle for ${pluginId}`));
-        document.body.appendChild(script);
-    });
+                    if (typeof mount !== 'function') {
+                        reject(new Error(`Plugin mount function not found for ${pluginId}`));
+
+                        return;
+                    }
+
+                    mount();
+                    resolve();
+                };
+
+                const existing = document.getElementById(scriptId) as HTMLScriptElement | null;
+                if (existing) {
+                    if (existing.dataset.loaded === 'true') {
+                        runMount();
+
+                        return;
+                    }
+
+                    existing.addEventListener('load', () => runMount(), { once: true });
+                    existing.addEventListener('error', () => reject(new Error(`Failed to load plugin bundle for ${pluginId}`)), {
+                        once: true,
+                    });
+
+                    return;
+                }
+
+                const script = document.createElement('script');
+                script.id = scriptId;
+                script.src = `/plugins-assets/${pluginId}/${bundle.replace(/^\//, '')}`;
+                script.async = true;
+                script.onload = () => {
+                    script.dataset.loaded = 'true';
+                    runMount();
+                };
+                script.onerror = () => reject(new Error(`Failed to load plugin bundle for ${pluginId}`));
+                document.body.appendChild(script);
+            })
+    );
 };

@@ -17,6 +17,7 @@ export default ({ plugin }: Props) => {
 
     const uuid = ServerContext.useStoreState((state) => state.server.data?.uuid || '');
     const pluginPermissions = ServerContext.useStoreState((state) => state.server.pluginPermissions);
+    const corePermissions = ServerContext.useStoreState((state) => state.server.permissions);
 
     useEffect(() => {
         if (!uuid || !plugin.ui.server.bundle) {
@@ -36,17 +37,9 @@ export default ({ plugin }: Props) => {
             apiBase: `/api/plugins/${plugin.id}`,
             csrfToken: csrfMeta?.getAttribute('content') || undefined,
             getPermissions: () => pluginPermissions[plugin.id] || [],
+            hasFullAccess: () => corePermissions.includes('*'),
         })
             .then(() => {
-                const mount = (window as Window & { [key: string]: (() => void) | undefined })[
-                    `PterodactylPlugin_${plugin.id.replace(/\./g, '_')}`
-                ];
-
-                if (typeof mount === 'function' && containerRef.current) {
-                    containerRef.current.innerHTML = '';
-                    mount();
-                }
-
                 setLoaded(true);
             })
             .catch((err) => {

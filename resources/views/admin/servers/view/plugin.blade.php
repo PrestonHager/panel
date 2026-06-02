@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 
 @section('title')
-    Server — {{ $server->name }}: {{ $pluginName }}
+    Server  {{ $server->name }}: {{ $pluginName }}
 @endsection
 
 @section('content-header')
@@ -32,6 +32,7 @@
 
 @section('footer-scripts')
     @parent
+    <link rel="stylesheet" href="{{ asset('plugins/plugin-host.css') }}">
     <script>
         window.__PterodactylPluginContext = {
             pluginId: @json($pluginId),
@@ -40,6 +41,9 @@
             csrfToken: @json(csrf_token()),
             getPermissions: function () {
                 return ['*'];
+            },
+            hasFullAccess: function () {
+                return true;
             },
         };
     </script>
