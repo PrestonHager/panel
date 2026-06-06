@@ -17,6 +17,7 @@ use Pterodactyl\Services\Plugins\PluginSettingsStore;
 use Pterodactyl\Services\Plugins\PluginSettingsValidator;
 use Pterodactyl\Services\Plugins\PluginSettingsSchemaService;
 use Pterodactyl\Services\Plugins\PluginVersionService;
+use Pterodactyl\Services\Plugins\PluginThemeService;
 use Pterodactyl\Plugins\Exceptions\PluginException;
 use Pterodactyl\Http\Requests\Admin\Plugin\InstallPluginRequest;
 use Pterodactyl\Http\Requests\Admin\Plugin\UpdatePluginSettingsRequest;
