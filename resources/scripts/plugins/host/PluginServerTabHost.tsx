@@ -3,6 +3,7 @@ import { useRouteMatch } from 'react-router-dom';
 import Spinner from '@/components/elements/Spinner';
 import { ServerContext } from '@/state/server';
 import loadPluginBundle from '@/plugins/host/loadPluginBundle';
+import { applySurfaceToHost } from '@/plugins/host/pluginThemeContext';
 import { EnabledPlugin } from '@/api/plugins/getEnabledPlugins';
 
 interface Props {
@@ -36,7 +37,7 @@ export default ({ plugin }: Props) => {
             serverUuid: uuid,
             apiBase: `/api/plugins/${plugin.id}`,
             csrfToken: csrfMeta?.getAttribute('content') || undefined,
-            theme: 'dark',
+            surface: 'client',
             getPermissions: () => pluginPermissions[plugin.id] || [],
             hasFullAccess: () => corePermissions.includes('*'),
         })
@@ -48,6 +49,12 @@ export default ({ plugin }: Props) => {
                 setError('Failed to load plugin interface.');
             });
     }, [plugin.id, plugin.ui.server.bundle, uuid, pluginPermissions]);
+
+    useEffect(() => {
+        if (containerRef.current) {
+            applySurfaceToHost(containerRef.current, 'client');
+        }
+    }, [loaded]);
 
     if (error) {
         return <p className={'text-red-400'}>{error}</p>;

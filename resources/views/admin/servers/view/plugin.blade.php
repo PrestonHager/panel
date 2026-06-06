@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 
 @section('title')
-    Server  {{ $server->name }}: {{ $pluginName }}
+    Server – {{ $server->name }}: {{ $pluginName }}
 @endsection
 
 @section('content-header')
@@ -23,7 +23,7 @@
                 <h3 class="box-title">{{ $pluginName }}</h3>
             </div>
             <div class="box-body">
-                <div id="plugin-root-{{ $pluginId }}"></div>
+                <div id="plugin-root-{{ $pluginId }}" data-pt-surface="admin" class="ptero-plugin"></div>
             </div>
         </div>
     </div>
@@ -32,14 +32,17 @@
 
 @section('footer-scripts')
     @parent
+    <link rel="stylesheet" href="{{ route('plugins.panel-tokens') }}">
+    <link rel="stylesheet" href="{{ route('plugins.panel-theme') }}">
     <link rel="stylesheet" href="{{ asset('plugins/plugin-host.css') }}">
+    <script src="{{ asset('plugins/plugin-ui.js') }}"></script>
     <script>
         window.__PterodactylPluginContext = {
             pluginId: @json($pluginId),
             serverUuid: @json($server->uuid),
             apiBase: @json('/api/plugins/' . $pluginId),
             csrfToken: @json(csrf_token()),
-            theme: 'light',
+            surface: 'admin',
             getPermissions: function () {
                 return ['*'];
             },
@@ -47,6 +50,13 @@
                 return true;
             },
         };
+        if (window.PterodactylPluginUi) {
+            window.PterodactylPluginUi.enrichContext(
+                window.__PterodactylPluginContext,
+                'admin',
+                document.getElementById('plugin-root-{{ $pluginId }}')
+            );
+        }
     </script>
     <script src="/plugins-assets/{{ $pluginId }}/{{ ltrim($bundle, '/') }}"></script>
     <script>

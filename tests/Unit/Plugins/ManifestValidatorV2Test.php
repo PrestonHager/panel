@@ -64,4 +64,16 @@ class ManifestValidatorV2Test extends TestCase
             ],
         ]);
     }
+
+    public function testReadsThemeBlockFromFixture(): void
+    {
+        $path = dirname(__DIR__, 2) . '/Fixtures/plugins/test-plugin';
+        $manifest = $this->validator->readFromDirectory($path);
+
+        $theme = $manifest->uiTheme();
+        $this->assertNotNull($theme);
+        $this->assertContains('client', $theme['surfaces']);
+        $this->assertSame('#7c3aed', $theme['tokens']['color.primary']);
+        $this->assertSame('assets/theme.css', $theme['stylesheet']);
+    }
 }

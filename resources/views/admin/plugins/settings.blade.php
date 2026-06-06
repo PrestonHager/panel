@@ -27,7 +27,7 @@
                     <div class="box-body">
                         @if($hasStructuredForm)
                             <p class="text-muted">Configure this plugin using the fields below. Sensitive values are encrypted at rest.</p>
-                            <div id="plugin-settings-form" class="ptero-plugin ptero-plugin--on-light"></div>
+                            <div id="plugin-settings-form" class="ptero-plugin" data-pt-surface="admin"></div>
                             <script type="application/json" id="plugin-settings-schema">@json($schema->toArray('admin'))</script>
                             <script type="application/json" id="plugin-settings-values">@json($values)</script>
                         @else
@@ -67,6 +67,8 @@
 @section('footer-scripts')
     @parent
     @if($hasStructuredForm)
+        <link rel="stylesheet" href="{{ route('plugins.panel-tokens') }}">
+        <link rel="stylesheet" href="{{ route('plugins.panel-theme') }}">
         <link rel="stylesheet" href="{{ asset('plugins/plugin-host.css') }}">
         <script src="{{ asset('plugins/plugin-settings-form.js') }}"></script>
         <script>

@@ -213,4 +213,19 @@ return [
             'allowed_hosts' => array_filter(array_map('trim', explode(',', env('PTERODACTYL_PLUGIN_HTTP_ALLOWED_HOSTS', 'api.cloudflare.com,api.porkbun.com')))),
         ],
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Panel Self-Update
+    |--------------------------------------------------------------------------
+    */
+
+    'update' => [
+        'repository' => env('PTERODACTYL_UPDATE_REPOSITORY', 'pterodactyl/panel'),
+        'mode' => env('PTERODACTYL_UPDATE_MODE', 'auto'),
+        'branch' => env('PTERODACTYL_UPDATE_BRANCH', '1.0-develop'),
+        'release' => env('PTERODACTYL_UPDATE_RELEASE'),
+        'git_remote' => env('PTERODACTYL_UPDATE_GIT_REMOTE', 'origin'),
+        'backup_retention' => (int) env('PTERODACTYL_UPDATE_BACKUP_RETENTION', 5),
+    ],
 ];

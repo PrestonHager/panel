@@ -13,6 +13,11 @@ class UpdatePluginPermissionsRequest extends AdminFormRequest
             'approved_permissions.*' => 'string',
             'approved_http_hosts' => 'nullable|array',
             'approved_http_hosts.*' => 'string|max:255',
+            'approved_theme_enabled' => 'nullable|boolean',
+            'approved_theme_surfaces' => 'nullable|array',
+            'approved_theme_surfaces.*' => 'string|in:client,admin',
+            'approved_theme_token_keys' => 'nullable|array',
+            'approved_theme_token_keys.*' => 'string|max:191',
         ];
     }
 }

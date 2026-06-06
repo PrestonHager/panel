@@ -15,6 +15,10 @@ export interface PluginSettingsField {
     min?: number;
     max?: number;
     ownerOnly?: boolean;
+    itemFields?: PluginSettingsField[];
+    itemLabel?: string;
+    minItems?: number;
+    maxItems?: number;
 }
 
 export interface PluginSettingsResponse {

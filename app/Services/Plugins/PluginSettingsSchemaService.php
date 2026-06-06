@@ -146,6 +146,27 @@ class PluginSettingsSchemaService
             ];
         }
 
+        $itemFields = [];
+        if ($type === 'list') {
+            $rawItemFields = $raw['itemFields'] ?? [];
+            if (!is_array($rawItemFields) || empty($rawItemFields)) {
+                throw new PluginException(sprintf('List field "%s" must declare at least one item field.', $key));
+            }
+
+            foreach ($rawItemFields as $itemRaw) {
+                if (!is_array($itemRaw)) {
+                    continue;
+                }
+
+                $itemField = $this->parseItemField($itemRaw, $plugin, $key);
+                $itemFields[] = $itemField;
+            }
+
+            if (empty($itemFields)) {
+                throw new PluginException(sprintf('List field "%s" must declare at least one valid item field.', $key));
+            }
+        }
+
         return new PluginSettingsField(
             key: $key,
             type: $type,
@@ -163,6 +184,57 @@ class PluginSettingsSchemaService
             sensitive: (bool) ($raw['sensitive'] ?? ($type === 'password')),
             audit: (bool) ($raw['audit'] ?? false),
             ownerOnly: (bool) ($raw['ownerOnly'] ?? false),
+            itemFields: $itemFields,
+            itemLabel: isset($raw['itemLabel']) ? (string) $raw['itemLabel'] : null,
+            minItems: isset($raw['minItems']) ? (int) $raw['minItems'] : null,
+            maxItems: isset($raw['maxItems']) ? (int) $raw['maxItems'] : null,
+        );
+    }
+
+    /**
+     * @param array<string, mixed> $raw
+     */
+    private function parseItemField(array $raw, Plugin $plugin, string $listKey): PluginSettingsField
+    {
+        $key = (string) ($raw['key'] ?? '');
+        if ($key === '') {
+            throw new PluginException(sprintf('Each item field in list "%s" must have a "key".', $listKey));
+        }
+
+        $type = (string) ($raw['type'] ?? 'string');
+        if ($type === 'list') {
+            throw new PluginException(sprintf('Nested list fields are not supported (list "%s", item "%s").', $listKey, $key));
+        }
+
+        if (!in_array($type, array_diff(PluginSettingsField::TYPES, ['list']), true)) {
+            throw new PluginException(sprintf('Invalid item field type "%s" in list "%s".', $type, $listKey));
+        }
+
+        $options = [];
+        foreach ((array) ($raw['options'] ?? []) as $option) {
+            if (!is_array($option) || !isset($option['value'])) {
+                continue;
+            }
+            $options[] = [
+                'value' => (string) $option['value'],
+                'label' => (string) ($option['label'] ?? $option['value']),
+            ];
+        }
+
+        return new PluginSettingsField(
+            key: $key,
+            type: $type,
+            label: (string) ($raw['label'] ?? $key),
+            surfaces: ['admin'],
+            storage: 'config',
+            description: isset($raw['description']) ? (string) $raw['description'] : null,
+            placeholder: isset($raw['placeholder']) ? (string) $raw['placeholder'] : null,
+            default: $raw['default'] ?? null,
+            required: (bool) ($raw['required'] ?? false),
+            options: $options,
+            min: isset($raw['min']) ? (int) $raw['min'] : null,
+            max: isset($raw['max']) ? (int) $raw['max'] : null,
+            sensitive: (bool) ($raw['sensitive'] ?? ($type === 'password')),
         );
     }
 

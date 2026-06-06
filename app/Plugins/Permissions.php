@@ -26,6 +26,8 @@ final class Permissions
 
     public const UI_REGISTER = 'ui.register';
 
+    public const UI_THEME = 'ui.theme';
+
     public const ALL = [
         self::EVENTS_SUBSCRIBE,
         self::SETTINGS_READ,
@@ -38,6 +40,7 @@ final class Permissions
         self::CONFIG_READ,
         self::API_SERVE,
         self::UI_REGISTER,
+        self::UI_THEME,
     ];
 
     public const RESERVED_CLIENT_PERMISSIONS = [
@@ -69,6 +72,7 @@ final class Permissions
             self::CONFIG_READ => 'Read admin-configured plugin configuration (encrypted JSON).',
             self::API_SERVE => 'Register HTTP API routes under /api/plugins/{id}.',
             self::UI_REGISTER => 'Expose plugin UI tabs and assets to the client SPA.',
+            self::UI_THEME => 'Contribute approved design token overlays to the panel theme.',
         ];
     }
 

@@ -16,6 +16,21 @@
 @section('content')
     <div class="row">
         <div class="col-md-8">
+            @if(!empty($updateCheck['update_available']))
+                <div class="alert alert-warning">
+                    @if(!empty($updateCheck['latest_version']))
+                        @lang('admin/plugins.outdated_banner', ['version' => $updateCheck['latest_version']])
+                        @if(!empty($updateCheck['release_url']))
+                            (<a href="{{ $updateCheck['release_url'] }}" target="_blank" rel="noopener">view release</a>)
+                        @endif
+                    @elseif(!empty($updateCheck['remote_commit']))
+                        @lang('admin/plugins.outdated_commit_banner', ['commit' => substr($updateCheck['remote_commit'], 0, 7)])
+                    @else
+                        @lang('admin/plugins.update_available')
+                    @endif
+                </div>
+            @endif
+
             <div class="box box-primary">
                 <div class="box-header with-border">
                     <h3 class="box-title">Details</h3>
@@ -23,7 +38,12 @@
                 <div class="box-body">
                     <dl class="dl-horizontal">
                         <dt>@lang('admin/plugins.version')</dt>
-                        <dd>{{ $plugin->version }}</dd>
+                        <dd>
+                            {{ $plugin->version }}
+                            @if(!empty($updateCheck['update_available']) && !empty($updateCheck['latest_version']))
+                                <span class="label label-warning">@lang('admin/plugins.latest_version', ['version' => $updateCheck['latest_version']])</span>
+                            @endif
+                        </dd>
                         <dt>Status</dt>
                         <dd>
                             @if($plugin->enabled)
@@ -47,7 +67,12 @@
                 <div class="box-footer">
                     <form method="POST" action="{{ route('admin.plugins.update', $plugin) }}" style="display:inline" onsubmit="return confirm('@lang('admin/plugins.confirm_update')')">
                         @csrf
-                        <button type="submit" class="btn btn-primary">@lang('admin/plugins.update')</button>
+                        @if(!empty($updateCheck['latest_ref']))
+                            <input type="hidden" name="ref" value="{{ $updateCheck['latest_ref'] }}">
+                        @endif
+                        <button type="submit" class="btn btn-primary" @if(empty($updateCheck['update_available'])) disabled title="Plugin is up to date." @endif>
+                            @lang('admin/plugins.update')
+                        </button>
                     </form>
                     @if($plugin->enabled)
                         <form method="POST" action="{{ route('admin.plugins.disable', $plugin) }}" style="display:inline">
@@ -120,6 +145,43 @@
                                                 @if(in_array($host, $approvedHttpHosts, true)) checked @endif
                                                 @if($plugin->enabled) disabled @endif>
                                             <code>{{ $host }}</code>
+                                        </label>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        @endif
+
+                        @if($manifest && !is_null($manifest->uiTheme()))
+                            @php($theme = $manifest->uiTheme())
+                            <hr>
+                            <h4>Theme overlay</h4>
+                            <p class="text-muted">Approve design token overrides this plugin contributes to the panel theme.</p>
+                            <ul class="list-unstyled">
+                                <li style="margin-bottom: 8px;">
+                                    <label style="font-weight: normal;">
+                                        <input type="checkbox" name="approved_theme_enabled" value="1"
+                                            @if($approvedTheme['enabled'] ?? false) checked @endif
+                                            @if($plugin->enabled) disabled @endif>
+                                        Enable theme overlay
+                                    </label>
+                                </li>
+                                @foreach($theme['surfaces'] ?? [] as $surface)
+                                    <li style="margin-bottom: 8px;">
+                                        <label style="font-weight: normal;">
+                                            <input type="checkbox" name="approved_theme_surfaces[]" value="{{ $surface }}"
+                                                @if(in_array($surface, $approvedTheme['surfaces'] ?? [], true)) checked @endif
+                                                @if($plugin->enabled) disabled @endif>
+                                            Surface: <code>{{ $surface }}</code>
+                                        </label>
+                                    </li>
+                                @endforeach
+                                @foreach($theme['tokens'] ?? [] as $tokenKey => $tokenValue)
+                                    <li style="margin-bottom: 8px;">
+                                        <label style="font-weight: normal;">
+                                            <input type="checkbox" name="approved_theme_token_keys[]" value="{{ $tokenKey }}"
+                                                @if(in_array($tokenKey, $approvedTheme['token_keys'] ?? [], true)) checked @endif
+                                                @if($plugin->enabled) disabled @endif>
+                                            <code>{{ $tokenKey }}</code> = <code>{{ $tokenValue }}</code>
                                         </label>
                                     </li>
                                 @endforeach

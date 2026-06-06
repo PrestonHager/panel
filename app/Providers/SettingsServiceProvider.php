@@ -30,6 +30,11 @@ class SettingsServiceProvider extends ServiceProvider
         'pterodactyl:client_features:allocations:enabled',
         'pterodactyl:client_features:allocations:range_start',
         'pterodactyl:client_features:allocations:range_end',
+        'pterodactyl:update:repository',
+        'pterodactyl:update:mode',
+        'pterodactyl:update:branch',
+        'pterodactyl:update:release',
+        'pterodactyl:update:git_remote',
     ];
 
     /**

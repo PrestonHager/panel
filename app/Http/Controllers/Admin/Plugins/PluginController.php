@@ -4,6 +4,7 @@ namespace Pterodactyl\Http\Controllers\Admin\Plugins;
 
 use Illuminate\View\View;
 use Pterodactyl\Models\Plugin;
+use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Prologue\Alerts\AlertsMessageBag;
 use Pterodactyl\Plugins\Permissions;
@@ -15,10 +16,12 @@ use Pterodactyl\Services\Plugins\PluginRegistry;
 use Pterodactyl\Services\Plugins\PluginSettingsStore;
 use Pterodactyl\Services\Plugins\PluginSettingsValidator;
 use Pterodactyl\Services\Plugins\PluginSettingsSchemaService;
+use Pterodactyl\Services\Plugins\PluginVersionService;
 use Pterodactyl\Plugins\Exceptions\PluginException;
 use Pterodactyl\Http\Requests\Admin\Plugin\InstallPluginRequest;
 use Pterodactyl\Http\Requests\Admin\Plugin\UpdatePluginSettingsRequest;
 use Pterodactyl\Http\Requests\Admin\Plugin\UpdatePluginPermissionsRequest;
+use Pterodactyl\Http\Requests\Admin\Plugin\UpgradeSelectedPluginsRequest;
 
 class PluginController extends Controller
 {
@@ -29,14 +32,21 @@ class PluginController extends Controller
         private PluginSettingsSchemaService $settingsSchemaService,
         private PluginSettingsValidator $settingsValidator,
         private PluginSettingsStore $settingsStore,
+        private PluginVersionService $pluginVersionService,
+        private PluginThemeService $themeService,
     ) {
     }
 
     public function index(): View
     {
+        $updateChecks = $this->pluginVersionService->checkAll();
+        $outdatedCount = $this->pluginVersionService->outdatedCount($updateChecks);
+
         return view('admin.plugins.index', [
             'plugins' => Plugin::query()->orderBy('name')->get(),
             'permissionDescriptions' => Permissions::descriptions(),
+            'updateChecks' => $updateChecks,
+            'outdatedCount' => $outdatedCount,
         ]);
     }
 
@@ -81,6 +91,8 @@ class PluginController extends Controller
 
         $approvedPermissions = $plugin->approved_permissions ?? $plugin->permissions ?? [];
         $approvedHttpHosts = $plugin->approved_http_hosts ?? $manifest?->httpAllowedHosts ?? [];
+        $approvedTheme = $plugin->approved_theme ?? ['enabled' => false, 'surfaces' => [], 'token_keys' => []];
+        $updateCheck = $this->pluginVersionService->check($plugin);
 
         return view('admin.plugins.view', [
             'plugin' => $plugin,
@@ -89,7 +101,9 @@ class PluginController extends Controller
             'highRiskPermissions' => Permissions::highRisk(),
             'approvedPermissions' => $approvedPermissions,
             'approvedHttpHosts' => $approvedHttpHosts,
+            'approvedTheme' => $approvedTheme,
             'pendingPermissions' => $pendingPermissions,
+            'updateCheck' => $updateCheck,
         ]);
     }
 
@@ -166,13 +180,39 @@ class PluginController extends Controller
         $plugin->approved_http_hosts = array_values(array_unique(array_filter(
             (array) $request->input('approved_http_hosts', [])
         )));
+
+        $themeEnabled = filter_var($request->input('approved_theme_enabled', false), FILTER_VALIDATE_BOOLEAN);
+        $themeSurfaces = array_values(array_intersect(
+            (array) $request->input('approved_theme_surfaces', []),
+            ['client', 'admin']
+        ));
+        $themeTokenKeys = array_values(array_filter(
+            (array) $request->input('approved_theme_token_keys', []),
+            fn ($key) => is_string($key) && $key !== ''
+        ));
+
+        $plugin->approved_theme = [
+            'enabled' => $themeEnabled,
+            'surfaces' => $themeSurfaces,
+            'token_keys' => $themeTokenKeys,
+        ];
         $plugin->save();
+
+        $this->themeService->regenerateOverlayCache();
 
         Activity::event('plugin:permissions.approved')
             ->property('plugin_id', $plugin->id)
             ->property('permissions', $approved)
             ->property('http_hosts', $plugin->approved_http_hosts)
             ->log();
+
+        if ($themeEnabled) {
+            Activity::event('plugin:theme.approved')
+                ->property('plugin_id', $plugin->id)
+                ->property('surfaces', $themeSurfaces)
+                ->property('token_keys', $themeTokenKeys)
+                ->log();
+        }
 
         $this->alert->success('Plugin permissions have been updated. Disable and re-enable the plugin for changes to take full effect.')->flash();
 
@@ -217,10 +257,13 @@ class PluginController extends Controller
         return redirect()->route('admin.plugins.view', ['plugin' => $plugin->id]);
     }
 
-    public function update(Plugin $plugin): RedirectResponse
+    public function update(Request $request, Plugin $plugin): RedirectResponse
     {
+        $updateCheck = $this->pluginVersionService->check($plugin);
+        $ref = $request->input('ref') ?: ($updateCheck['latest_ref'] ?? null);
+
         try {
-            $plugin = $this->pluginManager->updateFromGithub($plugin);
+            $plugin = $this->pluginManager->updateFromGithub($plugin, $ref);
         } catch (PluginException $exception) {
             $this->alert->danger($exception->getMessage())->flash();
 
@@ -235,6 +278,78 @@ class PluginController extends Controller
         ))->flash();
 
         return redirect()->route('admin.plugins.view', ['plugin' => $plugin->id]);
+    }
+
+    public function upgradeSelected(UpgradeSelectedPluginsRequest $request): RedirectResponse
+    {
+        return $this->performBulkUpgrade((array) $request->input('plugins', []));
+    }
+
+    public function upgradeAllOutdated(): RedirectResponse
+    {
+        $checks = $this->pluginVersionService->checkAll();
+        $pluginIds = array_keys(array_filter(
+            $checks,
+            fn (array $check) => $check['update_available']
+        ));
+
+        if (empty($pluginIds)) {
+            $this->alert->info('No outdated plugins were found.')->flash();
+
+            return redirect()->route('admin.plugins');
+        }
+
+        return $this->performBulkUpgrade($pluginIds, $checks);
+    }
+
+    /**
+     * @param string[] $pluginIds
+     * @param array<string, array<string, mixed>>|null $checks
+     */
+    private function performBulkUpgrade(array $pluginIds, ?array $checks = null): RedirectResponse
+    {
+        $checks ??= $this->pluginVersionService->checkAll();
+
+        $refMap = [];
+        $eligibleIds = [];
+
+        foreach ($pluginIds as $pluginId) {
+            $check = $checks[$pluginId] ?? null;
+            if (!$check || !$check['update_available']) {
+                continue;
+            }
+
+            $eligibleIds[] = $pluginId;
+            if (!empty($check['latest_ref'])) {
+                $refMap[$pluginId] = $check['latest_ref'];
+            }
+        }
+
+        if (empty($eligibleIds)) {
+            $this->alert->warning('None of the selected plugins have updates available.')->flash();
+
+            return redirect()->route('admin.plugins');
+        }
+
+        $result = $this->pluginManager->upgradePlugins($eligibleIds, $refMap);
+
+        if (!empty($result['success'])) {
+            $this->alert->success(sprintf(
+                'Successfully upgraded %d plugin(s).',
+                count($result['success'])
+            ))->flash();
+        }
+
+        if (!empty($result['failed'])) {
+            $messages = array_map(
+                fn (string $id, string $message) => sprintf('%s: %s', $id, $message),
+                array_keys($result['failed']),
+                array_values($result['failed'])
+            );
+            $this->alert->danger('Some plugin upgrades failed: ' . implode(' ', $messages))->flash();
+        }
+
+        return redirect()->route('admin.plugins');
     }
 
     public function disable(Plugin $plugin): RedirectResponse

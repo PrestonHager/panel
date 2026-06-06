@@ -1,4 +1,4 @@
-import React, { lazy } from 'react';
+import React, { lazy, useEffect } from 'react';
 import { hot } from 'react-hot-loader/root';
 import { Route, Router, Switch } from 'react-router-dom';
 import { StoreProvider } from 'easy-peasy';
@@ -14,6 +14,7 @@ import AuthenticatedRoute from '@/components/elements/AuthenticatedRoute';
 import { ServerContext } from '@/state/server';
 import '@/assets/tailwind.css';
 import Spinner from '@/components/elements/Spinner';
+import ensurePanelThemeStyles from '@/plugins/host/ensurePanelThemeStyles';
 
 const DashboardRouter = lazy(() => import(/* webpackChunkName: "dashboard" */ '@/routers/DashboardRouter'));
 const ServerRouter = lazy(() => import(/* webpackChunkName: "server" */ '@/routers/ServerRouter'));
@@ -38,6 +39,12 @@ interface ExtendedWindow extends Window {
 setupInterceptors(history);
 
 const App = () => {
+    useEffect(() => {
+        ensurePanelThemeStyles().catch((error) => {
+            console.error(error);
+        });
+    }, []);
+
     const { PterodactylUser, SiteConfiguration } = window as ExtendedWindow;
     if (PterodactylUser && !store.getState().user.data) {
         store.getActions().user.setUserData({

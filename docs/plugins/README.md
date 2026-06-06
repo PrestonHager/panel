@@ -25,9 +25,10 @@ The panel plugin system lets you extend Pterodactyl with **permission-gated PHP 
 - [Plugin HTTP API](plugin-http-api.md) — `/api/plugins/{id}` routes
 - [Plugin client permissions](plugin-client-permissions.md) — subuser grants
 - [Plugin UI](plugin-ui.md) — server tabs and asset bundles
+- [Theme API](theme-api.md) — design token overlays (API v2.1)
 - [Plugin settings](settings.md) — `settings.json` schema-driven configuration UI
 - [Event hooks](hooks.md) — server lifecycle hooks
 - [Publishing](publishing.md) — repo layout and versioning
 - [Development](development.md) — Nix shell and testing
 
-Panel plugin API version: **2.0** (declare `requires.panelPluginApi` in manifest).
+Panel plugin API version: **2.1** (declare `requires.panelPluginApi` in manifest; **2.0** plugins remain compatible).

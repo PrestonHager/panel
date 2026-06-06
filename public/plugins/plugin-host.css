@@ -1,99 +1,69 @@
 /**
- * Shared styles for plugin UI bundles (client server tabs and admin server views).
- * Matches Pterodactyl panel button/input colors (Tailwind theme).
+ * Shared plugin UI styles. Uses design tokens from panel-tokens.css (--pt-*).
+ * See docs/design/style-guide.md
  */
 
 .ptero-plugin {
-    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: var(--pt-font-body);
     font-size: 14px;
     line-height: 1.5;
-    color: #e5e7eb;
-}
-
-.ptero-plugin--on-light {
-    color: #374151;
+    color: var(--pt-color-text);
 }
 
 .ptero-plugin h2 {
     margin: 0 0 1rem;
     font-size: 1.25rem;
     font-weight: 600;
-    color: #f9fafb;
-}
-
-.ptero-plugin--on-light h2 {
-    color: #111827;
+    font-family: var(--pt-font-header);
+    color: var(--pt-color-text-heading);
 }
 
 .ptero-plugin h3,
 .ptero-plugin h4 {
     margin: 0 0 0.75rem;
     font-weight: 600;
-    color: #f3f4f6;
-}
-
-.ptero-plugin--on-light h3,
-.ptero-plugin--on-light h4 {
-    color: #1f2937;
+    font-family: var(--pt-font-header);
+    color: var(--pt-color-text-heading);
 }
 
 .ptero-plugin p {
     margin: 0.25rem 0 0.75rem;
-    color: #9ca3af;
+    color: var(--pt-color-text-muted);
 }
 
 .ptero-hint {
     margin: 0.35rem 0 0;
     font-size: 0.8rem;
-    color: #9ca3af;
+    color: var(--pt-color-text-muted);
     line-height: 1.4;
 }
 
-.ptero-plugin--on-light p {
-    color: #6b7280;
-}
-
-.ptero-plugin--on-light .ptero-hint {
-    color: #6b7280;
+.ptero-plugin a {
+    color: var(--pt-color-link);
 }
 
 .ptero-plugin code {
-    color: #d1d5db;
-    background: #374151;
+    color: var(--pt-color-code-text);
+    background: var(--pt-color-code-bg);
     padding: 0.1rem 0.35rem;
-    border-radius: 3px;
+    border-radius: var(--pt-radius-sm);
     font-size: 0.85em;
 }
 
-.ptero-plugin--on-light code {
-    color: #374151;
-    background: #f3f4f6;
-}
-
 .ptero-plugin-box {
-    background: #262626;
-    border: 1px solid #404040;
+    background: var(--pt-color-bg-surface);
+    border: 1px solid var(--pt-color-border);
     border-radius: 6px;
     padding: 1rem 1.25rem;
     margin-bottom: 1.25rem;
 }
 
-.ptero-plugin--on-light .ptero-plugin-box {
-    background: #fff;
-    border-color: #d2d6de;
-}
-
 .ptero-plugin-panel {
-    background: #171717;
-    border: 1px solid #525252;
+    background: var(--pt-color-bg-elevated);
+    border: 1px solid var(--pt-color-border);
     border-radius: 6px;
     padding: 1rem 1.25rem;
     margin: 1rem 0;
-}
-
-.ptero-plugin--on-light .ptero-plugin-panel {
-    background: #f9fafb;
-    border-color: #d2d6de;
 }
 
 .ptero-plugin-actions {
@@ -112,7 +82,7 @@
     font-weight: 600;
     line-height: 1.25;
     border: none;
-    border-radius: 4px;
+    border-radius: var(--pt-radius-md);
     cursor: pointer;
     transition: background-color 100ms ease;
 }
@@ -123,34 +93,34 @@
 }
 
 .ptero-btn--primary {
-    background: #2563eb;
-    color: #eff6ff;
+    background: var(--pt-color-primary);
+    color: var(--pt-color-primary-text);
 }
 
 .ptero-btn--primary:hover:not(:disabled) {
-    background: #3b82f6;
+    background: var(--pt-color-primary-hover);
 }
 
 .ptero-btn--primary:active:not(:disabled) {
-    background: #1d4ed8;
+    background: var(--pt-color-primary-active);
 }
 
 .ptero-btn--secondary {
-    background: #6b7280;
-    color: #f9fafb;
+    background: var(--pt-color-border);
+    color: var(--pt-color-text-heading);
 }
 
 .ptero-btn--secondary:hover:not(:disabled) {
-    background: #9ca3af;
+    background: var(--pt-color-border-input);
 }
 
 .ptero-btn--danger {
-    background: #dc2626;
-    color: #fef2f2;
+    background: var(--pt-color-danger);
+    color: var(--pt-color-danger-text);
 }
 
 .ptero-btn--danger:hover:not(:disabled) {
-    background: #ef4444;
+    background: var(--pt-color-danger-hover);
 }
 
 .ptero-btn--sm {
@@ -163,11 +133,7 @@
     margin-bottom: 0.25rem;
     font-size: 0.8rem;
     font-weight: 500;
-    color: #d1d5db;
-}
-
-.ptero-plugin--on-light .ptero-label {
-    color: #4b5563;
+    color: var(--pt-color-text);
 }
 
 .ptero-field {
@@ -181,33 +147,22 @@
     max-width: 360px;
     padding: 0.5rem 1rem;
     font-size: 14px;
-    border-radius: 4px;
-    border: 1px solid #525252;
+    border-radius: var(--pt-radius-md);
+    border: 1px solid var(--pt-color-border-input);
     outline: none;
-    background: #1f1f1f;
-    color: #f9fafb;
+    background: var(--pt-color-bg-input);
+    color: var(--pt-color-text-heading);
     box-shadow: none;
 }
 
 .ptero-input::placeholder {
-    color: #9ca3af;
+    color: var(--pt-color-text-muted);
     opacity: 1;
-}
-
-.ptero-plugin--on-light .ptero-input,
-.ptero-plugin--on-light .ptero-select {
-    background: #fff;
-    color: #111827;
-    border: 1px solid #d1d5db;
-}
-
-.ptero-plugin--on-light .ptero-input::placeholder {
-    color: #6b7280;
 }
 
 .ptero-input:focus,
 .ptero-select:focus {
-    box-shadow: 0 0 0 4px rgba(147, 197, 253, 0.75);
+    box-shadow: var(--pt-focus-ring);
 }
 
 .ptero-table {
@@ -218,63 +173,50 @@
 
 .ptero-table th,
 .ptero-table td {
-    border: 1px solid #404040;
+    border: 1px solid var(--pt-color-border);
     padding: 0.55rem 0.65rem;
     text-align: left;
 }
 
 .ptero-table th {
-    background: #404040;
-    color: #f9fafb;
+    background: var(--pt-color-border);
+    color: var(--pt-color-text-heading);
     font-weight: 600;
     font-size: 0.8rem;
 }
 
 .ptero-table td {
-    background: #262626;
-    color: #f3f4f6;
-}
-
-.ptero-plugin--on-light .ptero-table th,
-.ptero-plugin--on-light .ptero-table td {
-    border-color: #d2d6de;
-}
-
-.ptero-plugin--on-light .ptero-table th {
-    background: #f4f4f5;
-    color: #111827;
-}
-
-.ptero-plugin--on-light .ptero-table td {
-    background: #fff;
-    color: #374151;
+    background: var(--pt-color-bg-surface);
+    color: var(--pt-color-text);
 }
 
 .ptero-muted {
-    color: #9ca3af;
+    color: var(--pt-color-text-muted);
     font-style: italic;
 }
 
-.ptero-plugin--on-light .ptero-muted {
-    color: #6b7280;
-}
-
 .ptero-alert {
-    border-radius: 4px;
+    border-radius: var(--pt-radius-md);
     padding: 0.5rem 0.75rem;
     margin-bottom: 1rem;
 }
 
 .ptero-alert--danger {
-    color: #fecaca;
-    background: #450a0a;
-    border: 1px solid #7f1d1d;
+    color: var(--pt-color-danger-text);
+    background: rgba(220, 38, 38, 0.15);
+    border: 1px solid var(--pt-color-danger);
 }
 
-.ptero-plugin--on-light .ptero-alert--danger {
-    color: #991b1b;
-    background: #fef2f2;
-    border-color: #fecaca;
+.ptero-alert--success {
+    color: var(--pt-color-text-heading);
+    background: rgba(22, 163, 74, 0.15);
+    border: 1px solid var(--pt-color-success);
+}
+
+.ptero-alert--warning {
+    color: var(--pt-color-text-heading);
+    background: rgba(202, 138, 4, 0.15);
+    border: 1px solid var(--pt-color-warning);
 }
 
 .ptero-profile-row {
@@ -287,7 +229,7 @@
 .ptero-profile-row input[type='checkbox'] {
     width: auto;
     max-width: none;
-    accent-color: #2563eb;
+    accent-color: var(--pt-color-primary);
 }
 
 .ptero-profile-row label {
@@ -295,3 +237,54 @@
     cursor: pointer;
     color: inherit;
 }
+
+.ptero-plugin--on-light,
+.ptero-plugin--admin {
+    color: var(--pt-color-text);
+}
+
+.ptero-list-field {
+    margin-bottom: 1.25rem;
+}
+
+.ptero-list-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin: 0.75rem 0;
+}
+
+.ptero-list-row {
+    border: 1px solid var(--pt-color-border, #d2d6de);
+    border-radius: 6px;
+    background: var(--pt-color-bg-elevated, #f9fafb);
+    padding: 0.75rem 1rem;
+}
+
+.ptero-list-row-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.ptero-list-row-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.ptero-list-row-body {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.ptero-list-item-field {
+    margin-bottom: 0;
+}
+
+.ptero-list-footer {
+    margin-top: 0.5rem;
+}
+

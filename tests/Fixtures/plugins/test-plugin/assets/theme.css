@@ -1,0 +1,7 @@
+:root, [data-pt-surface="client"] {
+    --pt-color-primary: #7c3aed;
+}
+
+[data-pt-surface="admin"], .ptero-plugin--admin {
+    --pt-color-primary: #7c3aed;
+}

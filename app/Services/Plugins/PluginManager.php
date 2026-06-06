@@ -14,6 +14,7 @@ class PluginManager
     public function __construct(
         private readonly GitHubPluginInstaller $installer,
         private readonly PluginRegistry $registry,
+        private readonly PluginThemeService $themeService,
     ) {
     }
 
@@ -102,6 +103,41 @@ class PluginManager
         return $plugin->fresh();
     }
 
+    /**
+     * @param string[] $pluginIds
+     * @param array<string, string|null> $refMap
+     * @return array{success: string[], failed: array<string, string>, skipped: string[]}
+     */
+    public function upgradePlugins(array $pluginIds, array $refMap = []): array
+    {
+        $success = [];
+        $failed = [];
+        $skipped = [];
+
+        foreach ($pluginIds as $pluginId) {
+            $plugin = Plugin::query()->find($pluginId);
+            if (!$plugin) {
+                $failed[$pluginId] = 'Plugin not found.';
+
+                continue;
+            }
+
+            try {
+                $ref = $refMap[$pluginId] ?? null;
+                $this->updateFromGithub($plugin, $ref);
+                $success[] = $pluginId;
+            } catch (PluginException $exception) {
+                $failed[$pluginId] = $exception->getMessage();
+            }
+        }
+
+        return [
+            'success' => $success,
+            'failed' => $failed,
+            'skipped' => $skipped,
+        ];
+    }
+
     public function enable(Plugin $plugin): Plugin
     {
         if ($plugin->enabled) {
@@ -122,6 +158,8 @@ class PluginManager
 
         Activity::event('plugin:enable')->property('plugin_id', $plugin->id)->log();
 
+        $this->themeService->regenerateOverlayCache();
+
         // Registry is reloaded so PluginEventDispatcher picks up hooks on the next event.
 
         return $plugin->fresh();
@@ -139,6 +177,8 @@ class PluginManager
         $this->registry->flush();
 
         Activity::event('plugin:disable')->property('plugin_id', $plugin->id)->log();
+
+        $this->themeService->regenerateOverlayCache();
 
         return $plugin->fresh();
     }

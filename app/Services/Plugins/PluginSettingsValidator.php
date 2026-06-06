@@ -59,6 +59,7 @@ class PluginSettingsValidator
             'select' => $this->validateSelect($field, $value),
             'multiselect' => $this->validateMultiselect($field, $value),
             'json' => $this->validateJson($value),
+            'list' => $this->validateList($field, $value),
             'password', 'string', 'text' => $this->validateString($field, $value),
             default => throw new PluginException(sprintf('Unsupported field type "%s".', $field->type)),
         };
@@ -178,5 +179,95 @@ class PluginSettingsValidator
         }
 
         return $decoded;
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function validateList(PluginSettingsField $field, mixed $value): array
+    {
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+            if (!is_array($decoded)) {
+                throw new PluginException(sprintf('The %s field must contain a valid list.', $field->label));
+            }
+            $value = $decoded;
+        }
+
+        if (!is_array($value)) {
+            throw new PluginException(sprintf('The %s field must be a list.', $field->label));
+        }
+
+        if (!array_is_list($value)) {
+            throw new PluginException(sprintf('The %s field must be an ordered list.', $field->label));
+        }
+
+        $count = count($value);
+        if (!is_null($field->minItems) && $count < $field->minItems) {
+            throw new PluginException(sprintf(
+                'The %s field must contain at least %d item(s).',
+                $field->label,
+                $field->minItems
+            ));
+        }
+
+        if (!is_null($field->maxItems) && $count > $field->maxItems) {
+            throw new PluginException(sprintf(
+                'The %s field must contain at most %d item(s).',
+                $field->label,
+                $field->maxItems
+            ));
+        }
+
+        if (empty($field->itemFields)) {
+            throw new PluginException(sprintf('The %s field has no item schema defined.', $field->label));
+        }
+
+        $validated = [];
+        foreach ($value as $index => $row) {
+            if (!is_array($row)) {
+                throw new PluginException(sprintf('Item %d in %s must be an object.', $index + 1, $field->label));
+            }
+
+            $validated[] = $this->validateListRow($field, $row, $index);
+        }
+
+        return $validated;
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     * @return array<string, mixed>
+     */
+    private function validateListRow(PluginSettingsField $field, array $row, int $index): array
+    {
+        $validated = [];
+
+        foreach ($field->itemFields as $itemField) {
+            $key = $itemField->key;
+            $hasValue = array_key_exists($key, $row);
+            $value = $hasValue ? $row[$key] : null;
+
+            if (!$hasValue || ($value === null || $value === '')) {
+                if ($itemField->required) {
+                    throw new PluginException(sprintf(
+                        'Item %d in %s: the %s field is required.',
+                        $index + 1,
+                        $field->label,
+                        $itemField->label
+                    ));
+                }
+
+                if ($itemField->default !== null) {
+                    $validated[$key] = $itemField->default;
+                }
+
+                continue;
+            }
+
+            $validated[$key] = $this->validateField($itemField, $value);
+        }
+
+        return $validated;
     }
 }

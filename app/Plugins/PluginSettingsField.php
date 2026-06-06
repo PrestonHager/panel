@@ -16,6 +16,7 @@ final readonly class PluginSettingsField
         'select',
         'multiselect',
         'json',
+        'list',
     ];
 
     public const STORAGES = ['config', 'server', 'global'];
@@ -25,6 +26,7 @@ final readonly class PluginSettingsField
     /**
      * @param string[] $surfaces
      * @param array<int, array{value: string, label: string}> $options
+     * @param PluginSettingsField[] $itemFields
      */
     public function __construct(
         public string $key,
@@ -43,6 +45,10 @@ final readonly class PluginSettingsField
         public bool $sensitive = false,
         public bool $audit = false,
         public bool $ownerOnly = false,
+        public array $itemFields = [],
+        public ?string $itemLabel = null,
+        public ?int $minItems = null,
+        public ?int $maxItems = null,
     ) {
     }
 
@@ -77,6 +83,12 @@ final readonly class PluginSettingsField
             'max' => $this->max,
             'sensitive' => $this->sensitive ?: null,
             'ownerOnly' => $this->ownerOnly ?: null,
+            'itemLabel' => $this->itemLabel,
+            'minItems' => $this->minItems,
+            'maxItems' => $this->maxItems,
+            'itemFields' => !empty($this->itemFields)
+                ? array_map(fn (PluginSettingsField $field) => $field->toArray(), $this->itemFields)
+                : null,
         ], fn ($value) => !is_null($value));
     }
 }

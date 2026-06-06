@@ -36,19 +36,31 @@ Bundles are served from:
 
 Files are read from `storage/app/plugins/{plugin_id}/` with path traversal protection.
 
-## Shared panel stylesheet
+## Design tokens and stylesheets
 
-The panel ships `/plugins/plugin-host.css` with `ptero-*` classes that match client button/input
-styling (blue primary buttons, neutral inputs). The client SPA loads this automatically before
-your bundle; admin plugin views should include the same file:
+The panel ships shared CSS that keeps plugin UIs aligned with the client SPA and admin shell:
+
+| Asset | Purpose |
+|-------|---------|
+| `/plugins/panel-tokens.css` | Base `--pt-*` design tokens |
+| `/plugins/panel-theme.css` | Admin-approved token overlays |
+| `/plugins/plugin-host.css` | `ptero-*` component classes |
+| `/plugins/plugin-ui.js` | Optional context helpers |
+
+The client SPA loads base tokens and overlays on startup. Plugin server tabs load all four before your bundle. Admin plugin views should include the same stylesheets:
 
 ```html
-<link rel="stylesheet" href="{{ asset('plugins/plugin-host.css') }}">
+<link rel="stylesheet" href="/plugins/panel-tokens.css">
+<link rel="stylesheet" href="/plugins/panel-theme.css">
+<link rel="stylesheet" href="/plugins/plugin-host.css">
+<script src="/plugins/plugin-ui.js"></script>
 ```
 
-Use classes such as `ptero-btn ptero-btn--primary`, `ptero-btn--secondary`, `ptero-btn--danger`,
-`ptero-input`, `ptero-select`, `ptero-plugin-box`, and `ptero-plugin--on-light` (auto-detected
-when `body.skin-blue` is present for AdminLTE).
+Wrap content in the host root class from context. Use `ptero-btn`, `ptero-input`, `ptero-select`, `ptero-plugin-box`, and related classes — they read `var(--pt-*)` and follow approved theme overlays.
+
+**Do not** detect AdminLTE `body.skin-blue` or `prefers-color-scheme` in bundles. The host sets `data-pt-surface="client"` or `"admin"` on the mount root.
+
+For global theme contributions from plugins, see [theme-api.md](theme-api.md).
 
 ## Bundle contract
 
@@ -56,7 +68,10 @@ Expose a global mount function:
 
 ```javascript
 window.PterodactylPlugin_com_example_dns = function () {
-  // render into #plugin-root-com.example.dns or use __PterodactylPluginContext
+  var ctx = window.__PterodactylPluginContext;
+  var root = document.getElementById('plugin-root-com.example.dns');
+
+  root.innerHTML = '<div class="' + ctx.getRootClass() + '">...</div>';
 };
 ```
 
@@ -66,7 +81,11 @@ window.PterodactylPlugin_com_example_dns = function () {
 - `serverUuid`
 - `apiBase` (e.g. `/api/plugins/com.example.dns`)
 - `csrfToken` (required for session-authenticated POST/PUT/DELETE; admin views pass this from Blade)
+- `surface` — `'client'` or `'admin'`
+- `tokens` — resolved design token values
+- `getRootClass()` — wrapper class for your markup (`ptero-plugin`)
 - `getPermissions()`
 - `hasFullAccess()` (optional; returns true for server owners / root admins with `*` core access)
+- `theme` — deprecated (`'dark'` / `'light'`); use `surface`
 
 Mutating API calls must send `X-CSRF-TOKEN` and `X-Requested-With: XMLHttpRequest` with `credentials: 'same-origin'`.

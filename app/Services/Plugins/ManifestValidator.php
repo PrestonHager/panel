@@ -5,6 +5,7 @@ namespace Pterodactyl\Services\Plugins;
 use Pterodactyl\Plugins\HookMap;
 use Pterodactyl\Plugins\PanelPluginApi;
 use Pterodactyl\Plugins\Permissions;
+use Pterodactyl\Plugins\DesignTokenRegistry;
 use Pterodactyl\Plugins\PluginManifest;
 use Pterodactyl\Plugins\Exceptions\InvalidPluginManifestException;
 
@@ -206,6 +207,34 @@ class ManifestValidator
             $hosts = $data['http']['allowedHosts'] ?? [];
             if (!is_array($hosts) || empty($hosts)) {
                 throw new InvalidPluginManifestException('Plugins requesting http.request must declare http.allowedHosts.');
+            }
+        }
+
+        $uiTheme = $ui['theme'] ?? null;
+        if ($uiTheme !== null) {
+            if (!is_array($uiTheme)) {
+                throw new InvalidPluginManifestException('Manifest "ui.theme" must be an object.');
+            }
+
+            if (!in_array(Permissions::UI_THEME, $permissions, true)) {
+                throw new InvalidPluginManifestException('Plugins declaring ui.theme must request the "ui.theme" permission.');
+            }
+
+            $registry = new DesignTokenRegistry();
+            foreach ((array) ($uiTheme['tokens'] ?? []) as $key => $value) {
+                if (!is_string($key) || !is_string($value)) {
+                    throw new InvalidPluginManifestException('ui.theme.tokens must be string key/value pairs.');
+                }
+                if (!$registry->isAllowedKey($key)) {
+                    throw new InvalidPluginManifestException(sprintf('ui.theme token "%s" is not in the design token whitelist.', $key));
+                }
+            }
+
+            $surfaces = (array) ($uiTheme['surfaces'] ?? ['client']);
+            foreach ($surfaces as $surface) {
+                if (!is_string($surface) || !in_array($surface, ['client', 'admin'], true)) {
+                    throw new InvalidPluginManifestException('ui.theme.surfaces must contain "client" and/or "admin".');
+                }
             }
         }
 

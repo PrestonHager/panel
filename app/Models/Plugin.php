@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property array $permissions
  * @property array|null $approved_permissions
  * @property array|null $approved_http_hosts
+ * @property array|null $approved_theme
  * @property array|null $client_permissions
  * @property array|null $ui_config
  * @property array|null $config
@@ -41,6 +42,7 @@ class Plugin extends Model
         'permissions',
         'approved_permissions',
         'approved_http_hosts',
+        'approved_theme',
         'client_permissions',
         'ui_config',
         'config',
@@ -52,6 +54,7 @@ class Plugin extends Model
         'permissions' => 'array',
         'approved_permissions' => 'array',
         'approved_http_hosts' => 'array',
+        'approved_theme' => 'array',
         'client_permissions' => 'array',
         'ui_config' => 'array',
         'config' => 'encrypted:array',
@@ -69,6 +72,7 @@ class Plugin extends Model
         'permissions' => 'required|array',
         'approved_permissions' => 'nullable|array',
         'approved_http_hosts' => 'nullable|array',
+        'approved_theme' => 'nullable|array',
         'client_permissions' => 'nullable|array',
         'ui_config' => 'nullable|array',
         'config' => 'nullable|array',

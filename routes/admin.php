@@ -18,6 +18,8 @@ Route::group(['prefix' => 'plugins'], function () {
     Route::get('/', [Admin\Plugins\PluginController::class, 'index'])->name('admin.plugins');
     Route::get('/install', [Admin\Plugins\PluginController::class, 'installForm'])->name('admin.plugins.install');
     Route::post('/install', [Admin\Plugins\PluginController::class, 'install']);
+    Route::post('/upgrade', [Admin\Plugins\PluginController::class, 'upgradeSelected'])->name('admin.plugins.upgrade');
+    Route::post('/upgrade-outdated', [Admin\Plugins\PluginController::class, 'upgradeAllOutdated'])->name('admin.plugins.upgrade.outdated');
 
     Route::get('/view/{plugin}', [Admin\Plugins\PluginController::class, 'view'])->name('admin.plugins.view');
     Route::get('/view/{plugin}/settings', [Admin\Plugins\PluginController::class, 'settings'])->name('admin.plugins.settings');
@@ -99,6 +101,13 @@ Route::group(['prefix' => 'settings'], function () {
     Route::patch('/', [Admin\Settings\IndexController::class, 'update']);
     Route::patch('/mail', [Admin\Settings\MailController::class, 'update']);
     Route::patch('/advanced', [Admin\Settings\AdvancedController::class, 'update']);
+
+    Route::get('/updates', [Admin\Settings\UpdatesController::class, 'index'])->name('admin.settings.updates');
+    Route::patch('/updates', [Admin\Settings\UpdatesController::class, 'update']);
+    Route::get('/updates/backup/download', [Admin\Settings\UpdatesController::class, 'downloadBundle'])->name('admin.settings.updates.download');
+    Route::post('/updates/run', [Admin\Settings\UpdatesController::class, 'run'])->name('admin.settings.updates.run');
+    Route::get('/updates/status', [Admin\Settings\UpdatesController::class, 'status'])->name('admin.settings.updates.status');
+    Route::post('/updates/restore/{backup}', [Admin\Settings\UpdatesController::class, 'restore'])->name('admin.settings.updates.restore');
 });
 
 /*

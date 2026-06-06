@@ -26,6 +26,8 @@
             {!! Theme::css('vendor/sweetalert/sweetalert.min.css?t={cache-version}') !!}
             {!! Theme::css('vendor/animate/animate.min.css?t={cache-version}') !!}
             {!! Theme::css('css/pterodactyl.css?t={cache-version}') !!}
+            <link rel="stylesheet" href="{{ route('plugins.panel-tokens') }}">
+            <link rel="stylesheet" href="{{ route('plugins.panel-theme') }}">
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ionicons/2.0.1/css/ionicons.min.css">
 
@@ -78,6 +80,11 @@
                         <li class="{{ ! starts_with(Route::currentRouteName(), 'admin.settings') ?: 'active' }}">
                             <a href="{{ route('admin.settings')}}">
                                 <i class="fa fa-wrench"></i> <span>Settings</span>
+                                @if(!empty($adminUpdateBadgeCount))
+                                    <span class="pull-right-container">
+                                        <small class="label pull-right bg-red">{{ $adminUpdateBadgeCount }}</small>
+                                    </span>
+                                @endif
                             </a>
                         </li>
                         <li class="{{ ! starts_with(Route::currentRouteName(), 'admin.api') ?: 'active' }}">
@@ -88,6 +95,11 @@
                         <li class="{{ ! starts_with(Route::currentRouteName(), 'admin.plugins') ?: 'active' }}">
                             <a href="{{ route('admin.plugins') }}">
                                 <i class="fa fa-plug"></i> <span>Plugins</span>
+                                @if(!empty($adminUpdateBadgeCount))
+                                    <span class="pull-right-container">
+                                        <small class="label pull-right bg-red">{{ $adminUpdateBadgeCount }}</small>
+                                    </span>
+                                @endif
                             </a>
                         </li>
                         <li class="header">MANAGEMENT</li>

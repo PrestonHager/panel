@@ -87,4 +87,38 @@ final readonly class PluginManifest
 
         return is_array($admin) ? $admin : null;
     }
+
+    /**
+     * @return array{surfaces: string[], tokens: array<string, string>, stylesheet: string|null}|null
+     */
+    public function uiTheme(): ?array
+    {
+        $theme = $this->ui['theme'] ?? null;
+        if (!is_array($theme)) {
+            return null;
+        }
+
+        $surfaces = array_values(array_filter(
+            (array) ($theme['surfaces'] ?? ['client']),
+            fn ($s) => is_string($s) && in_array($s, ['client', 'admin'], true)
+        ));
+        if ($surfaces === []) {
+            $surfaces = ['client'];
+        }
+
+        $tokens = [];
+        foreach ((array) ($theme['tokens'] ?? []) as $key => $value) {
+            if (is_string($key) && is_string($value)) {
+                $tokens[$key] = $value;
+            }
+        }
+
+        $stylesheet = isset($theme['stylesheet']) ? (string) $theme['stylesheet'] : null;
+
+        return [
+            'surfaces' => $surfaces,
+            'tokens' => $tokens,
+            'stylesheet' => $stylesheet !== '' ? $stylesheet : null,
+        ];
+    }
 }

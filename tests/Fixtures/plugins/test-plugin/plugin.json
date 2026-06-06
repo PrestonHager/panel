@@ -13,7 +13,8 @@
     "allocation.read",
     "config.read",
     "api.serve",
-    "ui.register"
+    "ui.register",
+    "ui.theme"
   ],
   "clientPermissions": {
     "records.read": "View test records",
@@ -39,6 +40,13 @@
       "bundle": "assets/test.js",
       "permission": "records.read",
       "exact": true
+    },
+    "theme": {
+      "surfaces": ["client", "admin"],
+      "tokens": {
+        "color.primary": "#7c3aed"
+      },
+      "stylesheet": "assets/theme.css"
     }
   }
 }
