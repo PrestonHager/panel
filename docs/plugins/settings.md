@@ -37,6 +37,19 @@ my-plugin/
       "options": [
         { "value": "minecraft-java", "label": "Minecraft Java" }
       ]
+    },
+    {
+      "key": "srv_profiles",
+      "type": "list",
+      "label": "SRV Profiles",
+      "itemLabel": "Profile",
+      "surfaces": ["admin"],
+      "storage": "config",
+      "default": [],
+      "itemFields": [
+        { "key": "id", "type": "string", "label": "Profile ID", "required": true },
+        { "key": "label", "type": "string", "label": "Display Label" }
+      ]
     }
   ]
 }
@@ -47,7 +60,7 @@ my-plugin/
 | Property | Description |
 |----------|-------------|
 | `key` | Storage key |
-| `type` | `string`, `text`, `password`, `boolean`, `integer`, `number`, `select`, `multiselect`, `json` |
+| `type` | `string`, `text`, `password`, `boolean`, `integer`, `number`, `select`, `multiselect`, `json`, `list` |
 | `label` | Display label |
 | `description` | Help text |
 | `surfaces` | `admin`, `client`, or both |
@@ -57,6 +70,23 @@ my-plugin/
 | `sensitive` | Mask value in admin UI; never expose via client API |
 | `audit` | Log setting changes without values |
 | `ownerOnly` | Restrict client field to server owner / root admin |
+
+### List fields
+
+Use `type: "list"` for ordered collections of objects (for example SRV profile definitions).
+
+| Property | Description |
+|----------|-------------|
+| `itemFields` | Nested field definitions for each row (required) |
+| `itemLabel` | Row label prefix shown in the UI (for example `Profile` → "Profile #1") |
+| `minItems` / `maxItems` | Optional bounds on row count |
+| `default` | Default array value (usually `[]`) |
+
+Each row is stored as an object in the backing array. The admin and client settings UIs provide **Add**, **Remove**, **Up**, and **Down** controls for each list.
+
+Nested `list` fields inside `itemFields` are not supported in v1.
+
+Supported item field types: `string`, `text`, `password`, `boolean`, `integer`, `number`, `select`, `multiselect`, `json`.
 
 ## Storage backends
 

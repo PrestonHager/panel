@@ -10,6 +10,37 @@
       "required": false
     },
     {
+      "key": "example_endpoints",
+      "type": "list",
+      "label": "Example Endpoints",
+      "itemLabel": "Endpoint",
+      "description": "Ordered list of endpoint definitions.",
+      "surfaces": ["admin"],
+      "storage": "config",
+      "default": [],
+      "itemFields": [
+        {
+          "key": "name",
+          "type": "string",
+          "label": "Name",
+          "required": true
+        },
+        {
+          "key": "url",
+          "type": "string",
+          "label": "URL",
+          "required": true,
+          "placeholder": "https://example.com"
+        },
+        {
+          "key": "enabled",
+          "type": "boolean",
+          "label": "Enabled",
+          "default": true
+        }
+      ]
+    },
+    {
       "key": "server_note",
       "type": "text",
       "label": "Server Note",
