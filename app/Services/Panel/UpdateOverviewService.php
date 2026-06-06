@@ -23,14 +23,20 @@ class UpdateOverviewService
      */
     public function panelStatus(): array
     {
-        $latest = $this->upstreamVersionService->latestRelease();
+        $check = $this->upstreamVersionService->check();
 
         return [
-            'version' => $latest['version'],
-            'tag' => $latest['tag'],
-            'url' => $latest['url'],
-            'update_available' => $this->upstreamVersionService->isUpdateAvailable(),
-            'current_version' => (string) config('app.version'),
+            'version' => $check['latest_version'],
+            'tag' => $check['latest_tag'],
+            'url' => $check['release_url'],
+            'update_available' => $check['update_available'],
+            'current_version' => $check['current_version'],
+            'repository' => $check['repository'],
+            'branch' => $check['branch'],
+            'installed_commit' => $check['installed_commit'],
+            'remote_commit' => $check['remote_commit'],
+            'check_method' => $check['check_method'],
+            'latest_ref' => $check['latest_ref'],
         ];
     }
 

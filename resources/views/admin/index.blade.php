@@ -30,11 +30,16 @@
                     <p>
                         Your panel is <strong>not up-to-date.</strong>
                         You are running version <code>{{ $updateSummary['panel']['current_version'] }}</code>
-                        @if($updateSummary['panel']['version'])
-                            and version <code>{{ $updateSummary['panel']['version'] }}</code> is available from your configured upstream.
+                        @if(($updateSummary['panel']['check_method'] ?? null) === 'release' && $updateSummary['panel']['version'])
+                            and version <code>{{ $updateSummary['panel']['version'] }}</code> is available from
+                            <code>{{ $updateSummary['panel']['repository'] ?? 'your upstream' }}</code>.
                             @if($updateSummary['panel']['url'])
                                 (<a href="{{ $updateSummary['panel']['url'] }}" target="_blank" rel="noopener">view release</a>)
                             @endif
+                        @elseif(($updateSummary['panel']['check_method'] ?? null) === 'commit' && $updateSummary['panel']['remote_commit'])
+                            but branch <code>{{ $updateSummary['panel']['branch'] ?? 'main' }}</code> on
+                            <code>{{ $updateSummary['panel']['repository'] ?? 'your upstream' }}</code>
+                            has a newer commit (<code>{{ substr($updateSummary['panel']['remote_commit'], 0, 7) }}</code>).
                         @endif
                     </p>
                     @if(Auth::user()->root_admin)
@@ -45,8 +50,14 @@
                 @else
                     <p>
                         You are running Pterodactyl Panel version <code>{{ $updateSummary['panel']['current_version'] }}</code>.
-                        Your panel matches or exceeds the latest detected upstream release.
+                        Your panel matches the configured upstream
+                        (<code>{{ $updateSummary['panel']['repository'] ?? 'pterodactyl/panel' }}</code>@if(!empty($updateSummary['panel']['branch'])) branch <code>{{ $updateSummary['panel']['branch'] }}</code>@endif).
                     </p>
+                    @if(Auth::user()->root_admin)
+                        <a href="{{ route('admin.settings.updates') }}" class="btn btn-default btn-sm">
+                            <i class="fa fa-cog"></i> Configure Upstream
+                        </a>
+                    @endif
                 @endif
             </div>
         </div>

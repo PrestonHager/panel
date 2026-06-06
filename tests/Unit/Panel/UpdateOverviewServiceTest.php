@@ -12,12 +12,19 @@ class UpdateOverviewServiceTest extends TestCase
     public function testSummaryAggregatesPanelAndPluginStatus(): void
     {
         $upstream = $this->createMock(UpstreamVersionService::class);
-        $upstream->method('latestRelease')->willReturn([
-            'tag' => 'v2.0.0',
-            'version' => '2.0.0',
-            'url' => 'https://github.com/pterodactyl/panel/releases/latest',
+        $upstream->method('check')->willReturn([
+            'update_available' => true,
+            'current_version' => '1.0.0',
+            'latest_version' => '2.0.0',
+            'latest_tag' => 'v2.0.0',
+            'latest_ref' => 'v2.0.0',
+            'release_url' => 'https://github.com/pterodactyl/panel/releases/latest',
+            'repository' => 'pterodactyl/panel',
+            'branch' => '1.0-develop',
+            'installed_commit' => null,
+            'remote_commit' => null,
+            'check_method' => 'release',
         ]);
-        $upstream->method('isUpdateAvailable')->willReturn(true);
 
         $plugins = $this->createMock(PluginVersionService::class);
         $plugins->method('checkAll')->willReturn([

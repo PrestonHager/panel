@@ -127,6 +127,8 @@ class PanelUpgradeService
         $this->runProcess(['git', 'remote', 'set-url', $remote, $repoUrl], base_path(), $logger);
         $this->runProcess(['git', 'fetch', $remote, $branch], base_path(), $logger);
         $this->runProcess(['git', 'merge', '--ff-only', $remote . '/' . $branch], base_path(), $logger);
+
+        $this->upstreamVersionService->recordInstalledCommit();
     }
 
     private function downloadReleaseArchive(?string $url, ?string $release, ?callable $logger): void

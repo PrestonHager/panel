@@ -31,13 +31,18 @@ class UpdatesController extends Controller
 
     public function index(): View
     {
-        $latest = $this->upstreamVersionService->latestRelease();
+        $updateCheck = $this->upstreamVersionService->check();
         $updateSummary = $this->updateOverviewService->summary();
 
         return view('admin.settings.updates', [
             'currentVersion' => config('app.version'),
-            'latestRelease' => $latest,
-            'updateAvailable' => $this->upstreamVersionService->isUpdateAvailable(),
+            'latestRelease' => [
+                'version' => $updateCheck['latest_version'],
+                'tag' => $updateCheck['latest_tag'],
+                'url' => $updateCheck['release_url'],
+            ],
+            'updateCheck' => $updateCheck,
+            'updateAvailable' => $updateCheck['update_available'],
             'detectedMode' => $this->upstreamVersionService->detectInstallMode(),
             'backups' => $this->backupService->listBackups(),
             'status' => $this->upgradeService->getStatus(),
@@ -55,6 +60,8 @@ class UpdatesController extends Controller
         foreach ($request->normalize() as $key => $value) {
             $this->settings->set('settings::' . $key, $value ?? '');
         }
+
+        $this->upstreamVersionService->clearUpdateCache();
 
         $this->alert->success('Update settings have been saved successfully.')->flash();
 

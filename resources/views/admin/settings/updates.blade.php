@@ -40,20 +40,55 @@
                 <div class="box-body">
                     <p>
                         Current version: <code>{{ $currentVersion }}</code><br>
+                        Configured upstream: <code>{{ $updateCheck['repository'] }}</code>
+                        on branch <code>{{ $updateCheck['branch'] }}</code><br>
                         Detected install mode: <code>{{ $detectedMode }}</code><br>
                         @if($latestRelease['version'])
                             Latest upstream release: <code>{{ $latestRelease['version'] }}</code>
                             @if($latestRelease['url'])
                                 (<a href="{{ $latestRelease['url'] }}" target="_blank" rel="noopener">view release</a>)
                             @endif
+                            <br>
                         @else
-                            Latest upstream release could not be determined.
+                            Latest upstream release could not be determined.<br>
+                        @endif
+                        @if($updateCheck['installed_commit'])
+                            Installed commit: <code>{{ substr($updateCheck['installed_commit'], 0, 7) }}</code>
+                            @if($updateCheck['remote_commit'])
+                                · upstream commit: <code>{{ substr($updateCheck['remote_commit'], 0, 7) }}</code>
+                            @endif
+                            <br>
+                        @elseif($updateCheck['remote_commit'])
+                            Upstream commit on <code>{{ $updateCheck['branch'] }}</code>:
+                            <code>{{ substr($updateCheck['remote_commit'], 0, 7) }}</code><br>
                         @endif
                     </p>
                     @if($updateAvailable)
-                        <div class="alert alert-warning">A newer version appears to be available from your configured upstream.</div>
+                        <div class="alert alert-warning">
+                            @if(($updateCheck['check_method'] ?? null) === 'release' && $latestRelease['version'])
+                                A newer release version <code>{{ $latestRelease['version'] }}</code> is available from your configured upstream.
+                            @elseif(($updateCheck['check_method'] ?? null) === 'commit' && $updateCheck['remote_commit'])
+                                Your configured branch has a newer commit (<code>{{ substr($updateCheck['remote_commit'], 0, 7) }}</code>).
+                                The manifest version may be unchanged — run a safe upgrade to pull the latest files.
+                            @else
+                                An update appears to be available from your configured upstream.
+                            @endif
+                        </div>
                     @else
-                        <div class="alert alert-success">Your panel matches or exceeds the latest detected upstream release.</div>
+                        <div class="alert alert-success">
+                            Your panel matches the latest detected upstream release
+                            @if($updateCheck['remote_commit'] && ($updateCheck['check_method'] ?? null) === 'commit')
+                                and branch commit
+                            @endif
+                            for <code>{{ $updateCheck['repository'] }}</code>.
+                        </div>
+                    @endif
+                    @if(strtolower($updateCheck['repository']) === 'pterodactyl/panel' && $detectedMode === 'git')
+                        <p class="text-muted small">
+                            Tracking the official repository only compares release versions by default.
+                            If you run a fork or feature branch, set <strong>Repository</strong> to your fork (for example
+                            <code>PrestonHager/panel</code>) and <strong>Git Branch</strong> to your branch below so new pushes are detected by commit.
+                        </p>
                     @endif
                 </div>
             </div>
@@ -114,8 +149,7 @@
                         <div class="progress-bar progress-bar-striped active" id="upgrade-progress-bar" role="progressbar" style="width: 0%;">0%</div>
                     </div>
 
-                    <button type="button" class="btn @if($updateAvailable) btn-warning @else btn-default @endif" id="open-upgrade-modal"
-                        @if(!$updateAvailable) disabled title="Your panel is already up to date." @endif>
+                    <button type="button" class="btn @if($updateAvailable) btn-warning @else btn-default @endif" id="open-upgrade-modal">
                         <i class="fa fa-cloud-upload"></i> Start Safe Upgrade
                     </button>
                     <a href="{{ route('admin.settings.updates.download') }}" class="btn btn-default">

@@ -35,6 +35,7 @@ class SettingsServiceProvider extends ServiceProvider
         'pterodactyl:update:branch',
         'pterodactyl:update:release',
         'pterodactyl:update:git_remote',
+        'pterodactyl:update:commit_sha',
     ];
 
     /**
