@@ -6,6 +6,10 @@ export interface PluginServerUi {
     bundle: string;
     permission: string;
     exact?: boolean;
+    hasClientSettings?: boolean;
+    settingsPath?: string | null;
+    settingsPermission?: string | null;
+    permissionMap?: Record<string, string | null>;
 }
 
 export interface EnabledPlugin {

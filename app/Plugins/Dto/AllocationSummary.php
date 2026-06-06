@@ -10,6 +10,7 @@ final readonly class AllocationSummary
         public int $port,
         public bool $isPrimary,
         public ?string $notes,
+        public ?string $ipAlias = null,
     ) {
     }
 
@@ -24,6 +25,7 @@ final readonly class AllocationSummary
             'port' => $this->port,
             'is_primary' => $this->isPrimary,
             'notes' => $this->notes,
+            'ip_alias' => $this->ipAlias,
         ];
     }
 }

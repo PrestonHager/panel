@@ -9,6 +9,7 @@ class PluginUiConfigService
 {
     public function __construct(
         private readonly ManifestValidator $validator,
+        private readonly PluginSettingsSchemaService $settingsSchemaService,
     ) {
     }
 
@@ -17,16 +18,78 @@ class PluginUiConfigService
      */
     public function serverUiFor(Plugin $plugin): ?array
     {
-        if (!in_array(Permissions::UI_REGISTER, $plugin->permissions ?? [], true)) {
+        if (!in_array(Permissions::UI_REGISTER, $plugin->effectivePermissions(), true)) {
             return null;
         }
 
         $ui = $plugin->ui_config ?? [];
         if (!empty($ui['server']) && is_array($ui['server'])) {
-            return $ui['server'];
+            $server = $ui['server'];
+        } else {
+            $server = $this->readManifestServerUi($plugin);
         }
 
-        return $this->readManifestServerUi($plugin);
+        if (!is_array($server)) {
+            return null;
+        }
+
+        return $this->enrichServerUi($plugin, $server);
+    }
+
+    /**
+     * @param array<string, mixed> $server
+     * @return array<string, mixed>
+     */
+    private function enrichServerUi(Plugin $plugin, array $server): array
+    {
+        $schema = $this->settingsSchemaService->forPlugin($plugin);
+        $basePath = rtrim((string) ($server['path'] ?? ''), '/');
+
+        $server['hasClientSettings'] = $schema->hasClientSettings();
+        $server['settingsPath'] = $schema->hasClientSettings()
+            ? ($basePath === '' ? '/settings' : $basePath . '/settings')
+            : null;
+        $server['settingsPermission'] = $schema->clientSettingsPermission();
+        $server['permissionMap'] = $this->buildPermissionMap($plugin, $schema);
+
+        return $server;
+    }
+
+    /**
+     * @return array<string, string|null>
+     */
+    private function buildPermissionMap(Plugin $plugin, \Pterodactyl\Plugins\PluginSettingsSchema $schema): array
+    {
+        $map = [];
+
+        $serverUi = $plugin->ui_config['server'] ?? [];
+        if (!empty($serverUi['path']) && !empty($serverUi['permission'])) {
+            $map[(string) $serverUi['path']] = (string) $serverUi['permission'];
+        }
+
+        if ($schema->hasClientSettings()) {
+            $basePath = rtrim((string) ($serverUi['path'] ?? ''), '/');
+            $settingsPath = $basePath === '' ? '/settings' : $basePath . '/settings';
+            $map[$settingsPath] = $schema->clientSettingsPermission();
+        }
+
+        foreach ($schema->forSurface('client') as $field) {
+            if ($field->permission) {
+                $map['settings.' . $field->key] = $field->permission;
+            }
+        }
+
+        try {
+            $manifest = $this->validator->readFromDirectory(PluginRegistry::directoryFor($plugin->id));
+            foreach ($manifest->apiRoutes as $route) {
+                if (!empty($route['path']) && !empty($route['permission'])) {
+                    $map[$route['path']] = $route['permission'];
+                }
+            }
+        } catch (\Throwable) {
+        }
+
+        return $map;
     }
 
     /**
@@ -34,7 +97,7 @@ class PluginUiConfigService
      */
     public function adminServerUiFor(Plugin $plugin): ?array
     {
-        if (!in_array(Permissions::UI_REGISTER, $plugin->permissions ?? [], true)) {
+        if (!in_array(Permissions::UI_REGISTER, $plugin->effectivePermissions(), true)) {
             return null;
         }
 
@@ -52,7 +115,6 @@ class PluginUiConfigService
             return $fromManifest;
         }
 
-        // Fall back to client server UI so plugins only declaring ui.server still get an admin tab.
         $server = $this->serverUiFor($plugin);
         if (is_array($server) && !empty($server['name']) && !empty($server['bundle'])) {
             return [

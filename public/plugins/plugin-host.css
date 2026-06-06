@@ -42,7 +42,18 @@
     color: #9ca3af;
 }
 
+.ptero-hint {
+    margin: 0.35rem 0 0;
+    font-size: 0.8rem;
+    color: #9ca3af;
+    line-height: 1.4;
+}
+
 .ptero-plugin--on-light p {
+    color: #6b7280;
+}
+
+.ptero-plugin--on-light .ptero-hint {
     color: #6b7280;
 }
 
@@ -171,11 +182,16 @@
     padding: 0.5rem 1rem;
     font-size: 14px;
     border-radius: 4px;
-    border: 0;
+    border: 1px solid #525252;
     outline: none;
-    background: #262626;
+    background: #1f1f1f;
     color: #f9fafb;
-    box-shadow: 0 0 0 1px transparent;
+    box-shadow: none;
+}
+
+.ptero-input::placeholder {
+    color: #9ca3af;
+    opacity: 1;
 }
 
 .ptero-plugin--on-light .ptero-input,
@@ -183,6 +199,10 @@
     background: #fff;
     color: #111827;
     border: 1px solid #d1d5db;
+}
+
+.ptero-plugin--on-light .ptero-input::placeholder {
+    color: #6b7280;
 }
 
 .ptero-input:focus,
@@ -212,7 +232,7 @@
 
 .ptero-table td {
     background: #262626;
-    color: #e5e7eb;
+    color: #f3f4f6;
 }
 
 .ptero-plugin--on-light .ptero-table th,

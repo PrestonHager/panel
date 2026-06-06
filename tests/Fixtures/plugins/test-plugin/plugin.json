@@ -16,7 +16,8 @@
     "ui.register"
   ],
   "clientPermissions": {
-    "records.read": "View test records"
+    "records.read": "View test records",
+    "settings.manage": "Manage plugin settings"
   },
   "hooks": {
     "server.created": "Pterodactyl\\TestPlugin\\Listeners\\OnServerCreated"

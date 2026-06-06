@@ -71,4 +71,18 @@ final class Permissions
             self::UI_REGISTER => 'Expose plugin UI tabs and assets to the client SPA.',
         ];
     }
+
+    /**
+     * @return string[]
+     */
+    public static function highRisk(): array
+    {
+        return [
+            self::HTTP_REQUEST,
+            self::EVENTS_SUBSCRIBE,
+            self::API_SERVE,
+            self::SETTINGS_WRITE,
+            self::SERVER_METADATA_WRITE,
+        ];
+    }
 }

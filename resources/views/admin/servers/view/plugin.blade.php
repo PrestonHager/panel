@@ -39,6 +39,7 @@
             serverUuid: @json($server->uuid),
             apiBase: @json('/api/plugins/' . $pluginId),
             csrfToken: @json(csrf_token()),
+            theme: 'light',
             getPermissions: function () {
                 return ['*'];
             },

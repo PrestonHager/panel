@@ -1,0 +1,21 @@
+{
+  "fields": [
+    {
+      "key": "example_admin_setting",
+      "type": "string",
+      "label": "Example Admin Setting",
+      "surfaces": ["admin"],
+      "storage": "config",
+      "default": "hello"
+    },
+    {
+      "key": "server_flag",
+      "type": "boolean",
+      "label": "Server Flag",
+      "surfaces": ["client"],
+      "storage": "server",
+      "permission": "settings.manage",
+      "default": false
+    }
+  ]
+}

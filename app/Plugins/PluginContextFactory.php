@@ -20,7 +20,7 @@ class PluginContextFactory
 
     public function make(Plugin $plugin): PluginContext
     {
-        $gate = new PermissionGate($plugin->id, $plugin->permissions ?? []);
+        $gate = new PermissionGate($plugin->id, $plugin->effectivePermissions());
 
         return new PluginContext(
             pluginId: $plugin->id,
@@ -32,6 +32,7 @@ class PluginContextFactory
             http: new HttpClientAccessor(
                 $gate,
                 config('pterodactyl.plugins.http.allowed_hosts', []),
+                $plugin->approved_http_hosts ?? [],
                 (int) config('pterodactyl.plugins.http.timeout', 30),
             ),
             activity: new ActivityAccessor($plugin->id, $gate),

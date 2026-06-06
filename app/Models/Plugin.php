@@ -13,6 +13,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $commit_sha
  * @property bool $enabled
  * @property array $permissions
+ * @property array|null $approved_permissions
+ * @property array|null $approved_http_hosts
  * @property array|null $client_permissions
  * @property array|null $ui_config
  * @property array|null $config
@@ -37,6 +39,8 @@ class Plugin extends Model
         'commit_sha',
         'enabled',
         'permissions',
+        'approved_permissions',
+        'approved_http_hosts',
         'client_permissions',
         'ui_config',
         'config',
@@ -46,6 +50,8 @@ class Plugin extends Model
     protected $casts = [
         'enabled' => 'boolean',
         'permissions' => 'array',
+        'approved_permissions' => 'array',
+        'approved_http_hosts' => 'array',
         'client_permissions' => 'array',
         'ui_config' => 'array',
         'config' => 'encrypted:array',
@@ -61,6 +67,8 @@ class Plugin extends Model
         'commit_sha' => 'nullable|string|max:64',
         'enabled' => 'boolean',
         'permissions' => 'required|array',
+        'approved_permissions' => 'nullable|array',
+        'approved_http_hosts' => 'nullable|array',
         'client_permissions' => 'nullable|array',
         'ui_config' => 'nullable|array',
         'config' => 'nullable|array',
@@ -69,6 +77,16 @@ class Plugin extends Model
     public function data(): HasMany
     {
         return $this->hasMany(PluginData::class, 'plugin_id', 'id');
+    }
+
+    public function effectivePermissions(): array
+    {
+        $approved = $this->approved_permissions ?? [];
+        if (!empty($approved)) {
+            return array_values(array_intersect($approved, $this->permissions ?? []));
+        }
+
+        return $this->permissions ?? [];
     }
 
     public function getRouteKeyName(): string

@@ -22,6 +22,7 @@ import PermissionRoute from '@/components/elements/PermissionRoute';
 import routes from '@/routers/routes';
 import getEnabledPlugins, { EnabledPlugin } from '@/api/plugins/getEnabledPlugins';
 import PluginServerTabHost from '@/plugins/host/PluginServerTabHost';
+import PluginSettingsPanel from '@/components/server/plugins/PluginSettingsPanel';
 import PluginCan from '@/components/elements/PluginCan';
 import { usePluginPermissions } from '@/plugins/usePluginPermissions';
 
@@ -40,6 +41,30 @@ const PluginNavLink = ({
     return (
         <NavLink to={to(plugin.ui.server.path, true)} exact={plugin.ui.server.exact ?? true}>
             {plugin.ui.server.name}
+        </NavLink>
+    );
+};
+
+const PluginSettingsNavLink = ({
+    plugin,
+    to,
+}: {
+    plugin: EnabledPlugin;
+    to: (value: string, url?: boolean) => string;
+}) => {
+    if (!plugin.ui.server.hasClientSettings || !plugin.ui.server.settingsPath) {
+        return null;
+    }
+
+    const permission = plugin.ui.server.settingsPermission || plugin.ui.server.permission;
+    const allowed = usePluginPermissions(plugin.id, permission || undefined);
+    if (!allowed) {
+        return null;
+    }
+
+    return (
+        <NavLink to={to(plugin.ui.server.settingsPath, true)} exact>
+            {plugin.ui.server.name} Settings
         </NavLink>
     );
 };
@@ -122,6 +147,9 @@ export default () => {
                                 {enabledPlugins.map((plugin) => (
                                     <PluginNavLink key={plugin.id} plugin={plugin} to={to} />
                                 ))}
+                                {enabledPlugins.map((plugin) => (
+                                    <PluginSettingsNavLink key={`${plugin.id}-settings`} plugin={plugin} to={to} />
+                                ))}
                                 {rootAdmin && (
                                     // eslint-disable-next-line react/jsx-no-target-blank
                                     <a href={`/admin/servers/view/${serverId}`} target={'_blank'}>
@@ -158,6 +186,25 @@ export default () => {
                                             </PluginCan>
                                         </Route>
                                     ))}
+                                    {enabledPlugins.map((plugin) =>
+                                        plugin.ui.server.hasClientSettings && plugin.ui.server.settingsPath ? (
+                                            <Route
+                                                key={`${plugin.id}-settings`}
+                                                path={to(plugin.ui.server.settingsPath)}
+                                                exact
+                                            >
+                                                <PluginCan
+                                                    pluginId={plugin.id}
+                                                    permission={
+                                                        plugin.ui.server.settingsPermission ||
+                                                        plugin.ui.server.permission
+                                                    }
+                                                >
+                                                    <PluginSettingsPanel plugin={plugin} />
+                                                </PluginCan>
+                                            </Route>
+                                        ) : null
+                                    )}
                                     <Route path={'*'} component={NotFound} />
                                 </Switch>
                             </TransitionRouter>

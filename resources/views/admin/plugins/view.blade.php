@@ -73,19 +73,69 @@
                 <div class="box-header with-border">
                     <h3 class="box-title">@lang('admin/plugins.permissions')</h3>
                 </div>
-                <div class="box-body">
-                    <ul class="list-unstyled">
-                        @forelse($plugin->permissions ?? [] as $permission)
-                            <li style="margin-bottom: 10px;">
-                                <code>{{ $permission }}</code>
-                                <br>
-                                <span class="text-muted">{{ $permissionDescriptions[$permission] ?? '' }}</span>
-                            </li>
-                        @empty
-                            <li class="text-muted">No permissions requested.</li>
-                        @endforelse
-                    </ul>
-                </div>
+                <form method="POST" action="{{ route('admin.plugins.permissions.update', $plugin) }}">
+                    @csrf
+                    @method('PATCH')
+                    <div class="box-body">
+                        @if(!empty($pendingPermissions))
+                            <div class="callout callout-warning">
+                                <h4>Permission changes pending approval</h4>
+                                @if(!empty($pendingPermissions['added']))
+                                    <p><strong>Added:</strong> {{ implode(', ', $pendingPermissions['added']) }}</p>
+                                @endif
+                                @if(!empty($pendingPermissions['removed']))
+                                    <p><strong>Removed:</strong> {{ implode(', ', $pendingPermissions['removed']) }}</p>
+                                @endif
+                                <button type="submit" formaction="{{ route('admin.plugins.permissions.approve', $plugin) }}" class="btn btn-warning btn-sm">Approve new permissions</button>
+                            </div>
+                        @endif
+                        <ul class="list-unstyled">
+                            @forelse($plugin->permissions ?? [] as $permission)
+                                <li style="margin-bottom: 12px;">
+                                    <label style="font-weight: normal;">
+                                        <input type="checkbox" name="approved_permissions[]" value="{{ $permission }}"
+                                            @if(in_array($permission, $approvedPermissions, true)) checked @endif
+                                            @if($plugin->enabled) disabled @endif>
+                                        <code>{{ $permission }}</code>
+                                        @if(in_array($permission, $highRiskPermissions, true))
+                                            <span class="label label-danger">High risk</span>
+                                        @endif
+                                    </label>
+                                    <br>
+                                    <span class="text-muted">{{ $permissionDescriptions[$permission] ?? '' }}</span>
+                                </li>
+                            @empty
+                                <li class="text-muted">No permissions requested.</li>
+                            @endforelse
+                        </ul>
+
+                        @if($manifest && !empty($manifest->httpAllowedHosts))
+                            <hr>
+                            <h4>Approved HTTP Hosts</h4>
+                            <ul class="list-unstyled">
+                                @foreach($manifest->httpAllowedHosts as $host)
+                                    <li style="margin-bottom: 8px;">
+                                        <label style="font-weight: normal;">
+                                            <input type="checkbox" name="approved_http_hosts[]" value="{{ $host }}"
+                                                @if(in_array($host, $approvedHttpHosts, true)) checked @endif
+                                                @if($plugin->enabled) disabled @endif>
+                                            <code>{{ $host }}</code>
+                                        </label>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        @endif
+
+                        @if($plugin->enabled)
+                            <p class="text-muted">Disable the plugin to modify approved capabilities.</p>
+                        @endif
+                    </div>
+                    @if(!$plugin->enabled && !empty($plugin->permissions))
+                        <div class="box-footer">
+                            <button type="submit" class="btn btn-primary">Save approved permissions</button>
+                        </div>
+                    @endif
+                </form>
             </div>
 
             @if($manifest && !empty($manifest->hooks))

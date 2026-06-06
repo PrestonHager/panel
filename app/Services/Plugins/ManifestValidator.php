@@ -202,6 +202,13 @@ class ManifestValidator
             }
         }
 
+        if (in_array(Permissions::HTTP_REQUEST, $permissions, true)) {
+            $hosts = $data['http']['allowedHosts'] ?? [];
+            if (!is_array($hosts) || empty($hosts)) {
+                throw new InvalidPluginManifestException('Plugins requesting http.request must declare http.allowedHosts.');
+            }
+        }
+
         return PluginManifest::fromArray($data);
     }
 

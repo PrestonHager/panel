@@ -36,6 +36,7 @@ export default ({ plugin }: Props) => {
             serverUuid: uuid,
             apiBase: `/api/plugins/${plugin.id}`,
             csrfToken: csrfMeta?.getAttribute('content') || undefined,
+            theme: 'dark',
             getPermissions: () => pluginPermissions[plugin.id] || [],
             hasFullAccess: () => corePermissions.includes('*'),
         })

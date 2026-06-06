@@ -30,6 +30,8 @@ class PluginManager
                 'commit_sha' => $result['commit_sha'],
                 'enabled' => false,
                 'config' => [],
+                'approved_permissions' => $manifest->permissions,
+                'approved_http_hosts' => $manifest->httpAllowedHosts,
                 'installed_at' => now(),
             ]
         ));
@@ -58,6 +60,8 @@ class PluginManager
                     'commit_sha' => $result['commit_sha'],
                     'enabled' => false,
                     'config' => [],
+                    'approved_permissions' => $manifest->permissions,
+                    'approved_http_hosts' => $manifest->httpAllowedHosts,
                     'installed_at' => now(),
                 ]
             )
@@ -156,6 +160,56 @@ class PluginManager
     }
 
     /**
+     * @return array{added: string[], removed: string[]}|null
+     */
+    public function pendingPermissionChanges(Plugin $plugin, PluginManifest $manifest): ?array
+    {
+        $stored = $plugin->permissions ?? [];
+        $declared = $manifest->permissions;
+
+        sort($stored);
+        $sortedDeclared = $declared;
+        sort($sortedDeclared);
+
+        if ($stored === $sortedDeclared) {
+            return null;
+        }
+
+        return [
+            'added' => array_values(array_diff($declared, $stored)),
+            'removed' => array_values(array_diff($stored, $declared)),
+        ];
+    }
+
+    public function approvePendingPermissions(Plugin $plugin, PluginManifest $manifest): Plugin
+    {
+        $currentApproved = $plugin->approved_permissions ?? $plugin->permissions ?? [];
+        $approved = array_values(array_unique(array_merge(
+            $currentApproved,
+            $manifest->permissions
+        )));
+
+        $plugin->fill(array_merge(
+            $this->attributesFromManifest($manifest),
+            [
+                'approved_permissions' => array_values(array_intersect($approved, $manifest->permissions)),
+                'approved_http_hosts' => array_values(array_unique(array_merge(
+                    $plugin->approved_http_hosts ?? [],
+                    $manifest->httpAllowedHosts
+                ))),
+            ]
+        ));
+        $plugin->save();
+
+        Activity::event('plugin:permissions.approved')
+            ->property('plugin_id', $plugin->id)
+            ->property('permissions', $plugin->approved_permissions)
+            ->log();
+
+        return $plugin->fresh();
+    }
+
+    /**
      * @param array<string, mixed> $config
      */
     public function updateConfig(Plugin $plugin, array $config): Plugin
@@ -207,17 +261,20 @@ class PluginManager
             throw new PluginException(sprintf('Plugin entry class "%s" must implement PluginInterface.', $manifest->entry));
         }
 
-        $stored = $plugin->permissions ?? [];
-        sort($stored);
-        $declared = $manifest->permissions;
-        sort($declared);
-
-        if ($stored !== $declared) {
-            throw new PluginException('Plugin permissions have changed. Disable the plugin, reinstall, and approve the new permissions.');
+        $pending = $this->pendingPermissionChanges($plugin, $manifest);
+        if (!is_null($pending) && (!empty($pending['added']) || !empty($pending['removed']))) {
+            throw new PluginException('Plugin permissions have changed. Review and approve the new permissions before enabling.');
         }
 
-        if (!empty($manifest->hooks) && !in_array(Permissions::EVENTS_SUBSCRIBE, $stored, true)) {
-            throw new PluginException('Plugin declares hooks but does not have events.subscribe permission.');
+        if (in_array(Permissions::HTTP_REQUEST, $manifest->permissions, true)) {
+            $approvedHosts = $plugin->approved_http_hosts ?? [];
+            if (empty($approvedHosts) && !empty($manifest->httpAllowedHosts)) {
+                throw new PluginException('Approve at least one HTTP host for this plugin before enabling.');
+            }
+        }
+
+        if (!empty($manifest->hooks) && !in_array(Permissions::EVENTS_SUBSCRIBE, $plugin->effectivePermissions(), true)) {
+            throw new PluginException('Plugin declares hooks but does not have events.subscribe permission approved.');
         }
     }
 

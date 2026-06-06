@@ -51,6 +51,8 @@ Keys are automatically prefixed with `plugins.{plugin_id}.`.
 - `findByUuid(string $uuid): ServerSummary`
 - `getNetworkSummary(int $serverId): NetworkSummary` (requires `allocation.read`)
 
+`NetworkSummary` allocations include `id`, `ip`, `port`, `is_primary`, `notes`, and optional `ip_alias` (hostname alias assigned to the allocation).
+
 ### `$context->data()`
 
 Plugin-owned metadata (requires `server.metadata.write` for writes):

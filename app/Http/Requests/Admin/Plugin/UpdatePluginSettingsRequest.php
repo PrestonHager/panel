@@ -9,7 +9,8 @@ class UpdatePluginSettingsRequest extends AdminFormRequest
     public function rules(): array
     {
         return [
-            'config' => 'nullable|array',
+            'settings' => 'nullable|array',
+            'config_json' => 'nullable|string',
         ];
     }
 }

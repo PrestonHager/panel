@@ -17,7 +17,7 @@ Each plugin repository must include a `plugin.json` file at the repository root.
 |-------|------|-------------|
 | `permissions` | string[] | Requested capabilities (see [permissions.md](permissions.md)) |
 | `hooks` | object | Map of hook name → listener class |
-| `config.schema` | object | JSON Schema describing admin configuration (documentation only in v1) |
+| `config.schema` | object | JSON Schema describing admin configuration (fallback when `settings.json` is absent) |
 | `requires.panelPluginApi` | string | Minimum panel plugin API version (e.g. `"2.0"`); semver `>=` check at install/enable |
 | `clientPermissions` | object | Map of permission key → label for subusers and HTTP routes |
 | `api.routes` | array | HTTP routes served under `/api/plugins/{id}` (requires `api.serve`) |
@@ -110,4 +110,4 @@ If `entry` is `Com\Example\Dns\Plugin`, classes under `Com\Example\Dns\` load fr
 }
 ```
 
-See [plugin-http-api.md](plugin-http-api.md), [plugin-client-permissions.md](plugin-client-permissions.md), and [plugin-ui.md](plugin-ui.md).
+See [plugin-http-api.md](plugin-http-api.md), [plugin-client-permissions.md](plugin-client-permissions.md), [plugin-ui.md](plugin-ui.md), and [settings.md](settings.md).

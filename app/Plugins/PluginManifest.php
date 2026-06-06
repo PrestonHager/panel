@@ -11,6 +11,7 @@ final readonly class PluginManifest
      * @param array<int, array{method: string, path: string, handler: string, permission?: string}> $apiRoutes
      * @param array<string, mixed> $ui
      * @param array<string, mixed> $configSchema
+     * @param string[] $httpAllowedHosts
      */
     public function __construct(
         public string $id,
@@ -24,6 +25,7 @@ final readonly class PluginManifest
         public array $ui = [],
         public ?string $requiresPanelPluginApi = null,
         public array $configSchema = [],
+        public array $httpAllowedHosts = [],
     ) {
     }
 
@@ -57,6 +59,10 @@ final readonly class PluginManifest
             ui: $data['ui'] ?? [],
             requiresPanelPluginApi: $data['requires']['panelPluginApi'] ?? null,
             configSchema: $data['config']['schema'] ?? [],
+            httpAllowedHosts: array_values(array_filter(array_map(
+                'strval',
+                $data['http']['allowedHosts'] ?? []
+            ))),
         );
     }
 

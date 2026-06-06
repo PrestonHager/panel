@@ -19,7 +19,8 @@
     "ui.register"
   ],
   "clientPermissions": {
-    "example.read": "View example data"
+    "example.read": "View example data",
+    "settings.manage": "Manage plugin settings"
   },
   "hooks": {
     "server.created": "Com\\Example\\MyPlugin\\Listeners\\OnServerCreated"

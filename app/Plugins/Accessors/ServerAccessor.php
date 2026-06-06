@@ -59,6 +59,7 @@ class ServerAccessor
                 port: $allocation->port,
                 isPrimary: $allocation->id === $server->allocation_id,
                 notes: $allocation->notes,
+                ipAlias: $allocation->ip_alias,
             );
         })->all();
 

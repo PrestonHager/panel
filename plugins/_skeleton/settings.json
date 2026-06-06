@@ -1,0 +1,22 @@
+{
+  "fields": [
+    {
+      "key": "example_setting",
+      "type": "string",
+      "label": "Example Setting",
+      "description": "An example configuration value",
+      "surfaces": ["admin"],
+      "storage": "config",
+      "required": false
+    },
+    {
+      "key": "server_note",
+      "type": "text",
+      "label": "Server Note",
+      "description": "A note visible to server owners",
+      "surfaces": ["client"],
+      "storage": "server",
+      "permission": "settings.manage"
+    }
+  ]
+}

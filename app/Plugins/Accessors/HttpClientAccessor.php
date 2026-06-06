@@ -14,7 +14,8 @@ class HttpClientAccessor
 
     public function __construct(
         private readonly PermissionGate $gate,
-        private readonly array $allowedHosts,
+        private readonly array $globalAllowedHosts,
+        private readonly array $pluginAllowedHosts,
         private readonly int $timeout,
     ) {
     }
@@ -71,7 +72,9 @@ class HttpClientAccessor
         }
 
         $host = strtolower($host);
-        foreach ($this->allowedHosts as $allowed) {
+        $allowedHosts = $this->effectiveAllowedHosts();
+
+        foreach ($allowedHosts as $allowed) {
             $allowed = strtolower($allowed);
             if ($host === $allowed || str_ends_with($host, '.' . $allowed)) {
                 return;
@@ -82,5 +85,20 @@ class HttpClientAccessor
             'HTTP host "%s" is not in the plugin HTTP allowlist.',
             $host
         ));
+    }
+
+    /**
+     * @return string[]
+     */
+    private function effectiveAllowedHosts(): array
+    {
+        $global = array_values(array_filter(array_map('strval', $this->globalAllowedHosts)));
+        $plugin = array_values(array_filter(array_map('strval', $this->pluginAllowedHosts)));
+
+        if (empty($plugin)) {
+            return $global;
+        }
+
+        return array_values(array_intersect($global, $plugin));
     }
 }

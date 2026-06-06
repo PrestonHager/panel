@@ -23,6 +23,8 @@ Route::get('/permissions', [Client\ClientController::class, 'permissions']);
 Route::prefix('/plugins')->group(function () {
     Route::get('/enabled', [Client\Plugins\PluginController::class, 'enabled']);
     Route::get('/permissions', [Client\Plugins\PluginController::class, 'permissionsCatalog']);
+    Route::get('/{plugin}/settings', [Client\Plugins\PluginSettingsController::class, 'showGlobal']);
+    Route::patch('/{plugin}/settings', [Client\Plugins\PluginSettingsController::class, 'updateGlobal']);
 });
 
 Route::prefix('/account')->middleware(AccountSubject::class)->group(function () {
@@ -154,5 +156,10 @@ Route::group([
         Route::post('/rename', [Client\Servers\SettingsController::class, 'rename']);
         Route::post('/reinstall', [Client\Servers\SettingsController::class, 'reinstall']);
         Route::put('/docker-image', [Client\Servers\SettingsController::class, 'dockerImage']);
+    });
+
+    Route::group(['prefix' => '/plugins'], function () {
+        Route::get('/{plugin}/settings', [Client\Plugins\PluginSettingsController::class, 'showForServer']);
+        Route::patch('/{plugin}/settings', [Client\Plugins\PluginSettingsController::class, 'updateForServer']);
     });
 });

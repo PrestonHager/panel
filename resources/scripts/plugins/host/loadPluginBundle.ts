@@ -5,6 +5,7 @@ export interface PluginBundleContext {
     serverUuid: string;
     apiBase: string;
     csrfToken?: string;
+    theme?: 'dark' | 'light';
     getPermissions: () => string[];
     hasFullAccess?: () => boolean;
 }
