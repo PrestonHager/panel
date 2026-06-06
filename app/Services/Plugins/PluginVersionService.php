@@ -2,6 +2,7 @@
 
 namespace Pterodactyl\Services\Plugins;
 
+use Illuminate\Support\Str;
 use Pterodactyl\Models\Plugin;
 use Illuminate\Support\Facades\Cache;
 use Symfony\Component\Process\Process;
@@ -11,6 +12,7 @@ class PluginVersionService
 {
     public function __construct(
         private readonly GitHubPluginInstaller $installer,
+        private readonly PluginContentHashService $contentHash,
     ) {
     }
 
@@ -20,9 +22,12 @@ class PluginVersionService
      *     installed_version: string,
      *     latest_version: ?string,
      *     latest_ref: ?string,
+     *     installed_commit: ?string,
      *     remote_commit: ?string,
+     *     installed_hash: ?string,
+     *     remote_hash: ?string,
      *     release_url: ?string,
-     *     check_method: 'release'|'commit'|'local'|'unknown'
+     *     check_method: 'release'|'commit'|'hash'|'local'|'unknown'
      * }
      */
     public function check(Plugin $plugin): array
@@ -32,54 +37,102 @@ class PluginVersionService
             'installed_version' => $plugin->version,
             'latest_version' => null,
             'latest_ref' => null,
+            'installed_commit' => null,
             'remote_commit' => null,
+            'installed_hash' => null,
+            'remote_hash' => null,
             'release_url' => null,
             'check_method' => 'unknown',
         ];
 
-        if ($this->isLocalPlugin($plugin)) {
+        $source = $this->resolveGithubSource($plugin);
+        if ($source === null) {
             return array_merge($base, ['check_method' => 'local']);
         }
 
-        try {
-            [$owner, $repo] = $this->parseRepository($plugin);
-        } catch (PluginException) {
-            return $base;
-        }
+        [$owner, $repo, $ref] = $source;
 
         $release = $this->fetchLatestRelease($owner, $repo);
-        if ($release !== null && $release['version'] !== null) {
-            $latestVersion = $release['version'];
-            $updateAvailable = version_compare($plugin->version, $latestVersion, '<');
+        $releaseOutdated = $release !== null
+            && $release['version'] !== null
+            && version_compare($plugin->version, $release['version'], '<');
 
+        $remoteCommit = $this->fetchBranchHead($owner, $repo, $ref);
+        $installedCommit = $this->resolveInstalledCommitSha($plugin);
+        $commitOutdated = $remoteCommit !== null
+            && ($installedCommit === null || !hash_equals($installedCommit, $remoteCommit));
+
+        $installedHash = null;
+        $remoteHash = null;
+        $contentHashOutdated = false;
+
+        if (!$releaseOutdated && !$commitOutdated) {
+            [$installedHash, $remoteHash, $contentHashOutdated] = $this->compareContentHashes(
+                $plugin,
+                $owner,
+                $repo,
+                $ref
+            );
+        }
+
+        $updateAvailable = $releaseOutdated || $commitOutdated || $contentHashOutdated;
+
+        if ($releaseOutdated) {
             return [
-                'update_available' => $updateAvailable,
+                'update_available' => true,
                 'installed_version' => $plugin->version,
-                'latest_version' => $latestVersion,
-                'latest_ref' => $release['tag'] ?? $latestVersion,
-                'remote_commit' => null,
+                'latest_version' => $release['version'],
+                'latest_ref' => $release['tag'] ?? $release['version'],
+                'installed_commit' => $installedCommit,
+                'remote_commit' => $remoteCommit,
+                'installed_hash' => $installedHash,
+                'remote_hash' => $remoteHash,
                 'release_url' => $release['url'],
                 'check_method' => 'release',
             ];
         }
 
-        $ref = $plugin->source_ref ?: 'main';
-        $remoteCommit = $this->fetchBranchHead($owner, $repo, $ref);
-        if ($remoteCommit === null) {
-            return $base;
+        if ($commitOutdated) {
+            return [
+                'update_available' => true,
+                'installed_version' => $plugin->version,
+                'latest_version' => $release['version'] ?? null,
+                'latest_ref' => $ref,
+                'installed_commit' => $installedCommit,
+                'remote_commit' => $remoteCommit,
+                'installed_hash' => $installedHash,
+                'remote_hash' => $remoteHash,
+                'release_url' => $release['url'] ?? null,
+                'check_method' => 'commit',
+            ];
         }
 
-        $installedCommit = $plugin->commit_sha;
-        $updateAvailable = $installedCommit === null || !hash_equals($installedCommit, $remoteCommit);
+        if ($contentHashOutdated) {
+            return [
+                'update_available' => true,
+                'installed_version' => $plugin->version,
+                'latest_version' => $release['version'] ?? null,
+                'latest_ref' => $ref,
+                'installed_commit' => $installedCommit,
+                'remote_commit' => $remoteCommit,
+                'installed_hash' => $installedHash,
+                'remote_hash' => $remoteHash,
+                'release_url' => $release['url'] ?? null,
+                'check_method' => 'hash',
+            ];
+        }
 
         return [
-            'update_available' => $updateAvailable,
+            'update_available' => false,
             'installed_version' => $plugin->version,
-            'latest_version' => null,
-            'latest_ref' => $ref,
+            'latest_version' => $release['version'] ?? null,
+            'latest_ref' => $release !== null ? ($release['tag'] ?? $release['version']) : $ref,
+            'installed_commit' => $installedCommit,
             'remote_commit' => $remoteCommit,
-            'release_url' => null,
-            'check_method' => 'commit',
+            'installed_hash' => $installedHash,
+            'remote_hash' => $remoteHash,
+            'release_url' => $release['url'] ?? null,
+            'check_method' => $release !== null ? 'release' : ($remoteCommit !== null ? 'commit' : 'unknown'),
         ];
     }
 
@@ -89,9 +142,12 @@ class PluginVersionService
      *     installed_version: string,
      *     latest_version: ?string,
      *     latest_ref: ?string,
+     *     installed_commit: ?string,
      *     remote_commit: ?string,
+     *     installed_hash: ?string,
+     *     remote_hash: ?string,
      *     release_url: ?string,
-     *     check_method: 'release'|'commit'|'local'|'unknown'
+     *     check_method: 'release'|'commit'|'hash'|'local'|'unknown'
      * }>
      */
     public function checkAll(): array
@@ -115,6 +171,38 @@ class PluginVersionService
         return count(array_filter($checks, fn (array $check) => $check['update_available']));
     }
 
+    /**
+     * @return array{0: string, 1: string, 2: string}|null
+     */
+    private function resolveGithubSource(Plugin $plugin): ?array
+    {
+        if (!$this->isLocalPlugin($plugin)) {
+            try {
+                [$owner, $repo] = $this->parseRepository($plugin);
+
+                return [$owner, $repo, $plugin->source_ref ?: 'main'];
+            } catch (PluginException) {
+                return null;
+            }
+        }
+
+        $directory = PluginRegistry::directoryFor($plugin->id);
+        $remoteUrl = $this->readGitRemoteUrl($directory);
+        if ($remoteUrl === null) {
+            return null;
+        }
+
+        try {
+            [$owner, $repo] = $this->installer->parseGithubUrl($remoteUrl, 'main');
+        } catch (PluginException) {
+            return null;
+        }
+
+        $ref = $this->readGitBranch($directory) ?? ($plugin->source_ref !== 'local' ? $plugin->source_ref : 'main');
+
+        return [$owner, $repo, $ref ?: 'main'];
+    }
+
     private function isLocalPlugin(Plugin $plugin): bool
     {
         if ($plugin->source_ref === 'local') {
@@ -135,6 +223,101 @@ class PluginVersionService
         );
 
         return [$owner, $repo];
+    }
+
+    private function resolveInstalledCommitSha(Plugin $plugin): ?string
+    {
+        $directory = PluginRegistry::directoryFor($plugin->id);
+        $fromGit = $this->readGitHeadCommit($directory);
+        if ($fromGit !== null) {
+            return $fromGit;
+        }
+
+        return $plugin->commit_sha;
+    }
+
+    /**
+     * @return array{0: ?string, 1: ?string, 2: bool}
+     */
+    protected function compareContentHashes(Plugin $plugin, string $owner, string $repo, string $ref): array
+    {
+        $directory = PluginRegistry::directoryFor($plugin->id);
+        if (!is_dir($directory)) {
+            return [null, null, false];
+        }
+
+        $installedHash = $this->contentHash->hashDirectory($directory);
+        if ($installedHash === '') {
+            return [null, null, false];
+        }
+
+        $remoteHash = $this->fetchRemoteContentHash($owner, $repo, $ref);
+        if ($remoteHash === null || $remoteHash === '') {
+            return [$installedHash, null, false];
+        }
+
+        return [$installedHash, $remoteHash, !hash_equals($installedHash, $remoteHash)];
+    }
+
+    private function readGitHeadCommit(string $directory): ?string
+    {
+        if (!is_dir($directory . DIRECTORY_SEPARATOR . '.git')) {
+            return null;
+        }
+
+        $process = new Process(['git', '-C', $directory, 'rev-parse', 'HEAD']);
+        $process->setTimeout(10);
+        $process->run();
+
+        if (!$process->isSuccessful()) {
+            return null;
+        }
+
+        $sha = trim($process->getOutput());
+
+        return $sha !== '' ? $sha : null;
+    }
+
+    private function readGitRemoteUrl(string $directory): ?string
+    {
+        if (!is_dir($directory . DIRECTORY_SEPARATOR . '.git')) {
+            return null;
+        }
+
+        $process = new Process(['git', '-C', $directory, 'remote', 'get-url', 'origin']);
+        $process->setTimeout(10);
+        $process->run();
+
+        if (!$process->isSuccessful()) {
+            return null;
+        }
+
+        $url = trim($process->getOutput());
+
+        return $url !== '' ? $url : null;
+    }
+
+    private function readGitBranch(string $directory): ?string
+    {
+        if (!is_dir($directory . DIRECTORY_SEPARATOR . '.git')) {
+            return null;
+        }
+
+        $process = new Process(['git', '-C', $directory, 'rev-parse', '--abbrev-ref', 'HEAD']);
+        $process->setTimeout(10);
+        $process->run();
+
+        if (!$process->isSuccessful()) {
+            return null;
+        }
+
+        $branch = trim($process->getOutput());
+
+        if ($branch === '' || $branch === 'HEAD') {
+            return null;
+        }
+
+        return $branch;
     }
 
     /**
@@ -200,5 +383,88 @@ class PluginVersionService
 
             return (string) $data['sha'];
         });
+    }
+
+    protected function fetchRemoteContentHash(string $owner, string $repo, string $ref): ?string
+    {
+        $cacheKey = 'plugin:upstream:content-hash:' . md5($owner . '/' . $repo . ':' . $ref);
+
+        return Cache::remember($cacheKey, now()->addMinutes(15), function () use ($owner, $repo, $ref) {
+            $tmpRoot = storage_path('app/plugins/.tmp/' . Str::uuid());
+            $archive = $tmpRoot . '/archive.tar.gz';
+
+            if (!is_dir(dirname($tmpRoot))) {
+                mkdir(dirname($tmpRoot), 0755, true);
+            }
+
+            if (!mkdir($tmpRoot, 0755, true) && !is_dir($tmpRoot)) {
+                return null;
+            }
+
+            try {
+                $url = sprintf('https://api.github.com/repos/%s/%s/tarball/%s', $owner, $repo, $ref);
+                $download = Process::fromShellCommandline(
+                    'curl -fsSL -L -H ' . escapeshellarg('Accept: application/vnd.github+json')
+                    . ' -o ' . escapeshellarg($archive) . ' ' . escapeshellarg($url)
+                );
+                $download->setTimeout(120);
+                $download->run();
+
+                if (!$download->isSuccessful() || !is_file($archive)) {
+                    return null;
+                }
+
+                $extract = $tmpRoot . '/extract';
+                if (!mkdir($extract, 0755, true) && !is_dir($extract)) {
+                    return null;
+                }
+
+                $tar = new Process(['tar', '-xzf', $archive, '-C', $extract]);
+                $tar->setTimeout(120);
+                $tar->run();
+
+                if (!$tar->isSuccessful()) {
+                    return null;
+                }
+
+                $entries = array_values(array_diff(scandir($extract) ?: [], ['.', '..']));
+                if ($entries === []) {
+                    return null;
+                }
+
+                $root = $extract . DIRECTORY_SEPARATOR . $entries[0];
+                if (!is_dir($root)) {
+                    return null;
+                }
+
+                $hash = $this->contentHash->hashDirectory($root);
+
+                return $hash !== '' ? $hash : null;
+            } finally {
+                $this->removeDirectory($tmpRoot);
+            }
+        });
+    }
+
+    private function removeDirectory(string $directory): void
+    {
+        if (!is_dir($directory)) {
+            return;
+        }
+
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($directory, \FilesystemIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::CHILD_FIRST
+        );
+
+        foreach ($iterator as $item) {
+            if ($item->isDir()) {
+                rmdir($item->getPathname());
+            } else {
+                unlink($item->getPathname());
+            }
+        }
+
+        rmdir($directory);
     }
 }

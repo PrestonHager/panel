@@ -25,6 +25,8 @@
                         @endif
                     @elseif(!empty($updateCheck['remote_commit']))
                         @lang('admin/plugins.outdated_commit_banner', ['commit' => substr($updateCheck['remote_commit'], 0, 7)])
+                    @elseif(!empty($updateCheck['check_method']) && $updateCheck['check_method'] === 'hash')
+                        @lang('admin/plugins.outdated_hash_banner', ['ref' => $updateCheck['latest_ref'] ?? $plugin->source_ref])
                     @else
                         @lang('admin/plugins.update_available')
                     @endif
@@ -60,6 +62,12 @@
                             @endif
                             @if($plugin->commit_sha)
                                 <br><small>Commit: <code>{{ $plugin->commit_sha }}</code></small>
+                            @endif
+                            @if(!empty($updateCheck['installed_commit']) && $updateCheck['installed_commit'] !== $plugin->commit_sha)
+                                <br><small>Detected commit: <code>{{ $updateCheck['installed_commit'] }}</code></small>
+                            @endif
+                            @if($plugin->content_hash)
+                                <br><small>Content hash: <code>{{ substr($plugin->content_hash, 0, 12) }}…</code></small>
                             @endif
                         </dd>
                     </dl>

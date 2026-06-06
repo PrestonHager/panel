@@ -15,6 +15,7 @@ class PluginManager
         private readonly GitHubPluginInstaller $installer,
         private readonly PluginRegistry $registry,
         private readonly PluginThemeService $themeService,
+        private readonly PluginContentHashService $contentHash,
     ) {
     }
 
@@ -29,6 +30,7 @@ class PluginManager
                 'source_url' => $result['source_url'],
                 'source_ref' => $result['source_ref'],
                 'commit_sha' => $result['commit_sha'],
+                'content_hash' => $this->hashInstalledPlugin($manifest->id),
                 'enabled' => false,
                 'config' => [],
                 'approved_permissions' => $manifest->permissions,
@@ -59,6 +61,7 @@ class PluginManager
                     'source_url' => $result['source_url'],
                     'source_ref' => $result['source_ref'],
                     'commit_sha' => $result['commit_sha'],
+                    'content_hash' => $this->hashInstalledPlugin($manifest->id),
                     'enabled' => false,
                     'config' => [],
                     'approved_permissions' => $manifest->permissions,
@@ -84,6 +87,7 @@ class PluginManager
             $this->attributesFromManifest($result['manifest']),
             [
                 'commit_sha' => $result['commit_sha'],
+                'content_hash' => $this->hashInstalledPlugin($plugin->id),
                 'source_url' => $result['source_url'],
                 'source_ref' => $result['source_ref'],
             ]
@@ -316,6 +320,18 @@ class PluginManager
         if (!empty($manifest->hooks) && !in_array(Permissions::EVENTS_SUBSCRIBE, $plugin->effectivePermissions(), true)) {
             throw new PluginException('Plugin declares hooks but does not have events.subscribe permission approved.');
         }
+    }
+
+    private function hashInstalledPlugin(string $pluginId): ?string
+    {
+        $directory = PluginRegistry::directoryFor($pluginId);
+        if (!is_dir($directory)) {
+            return null;
+        }
+
+        $hash = $this->contentHash->hashDirectory($directory);
+
+        return $hash !== '' ? $hash : null;
     }
 
     private function removeDirectory(string $directory): void

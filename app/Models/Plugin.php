@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $source_url
  * @property string $source_ref
  * @property string|null $commit_sha
+ * @property string|null $content_hash
  * @property bool $enabled
  * @property array $permissions
  * @property array|null $approved_permissions
@@ -38,6 +39,7 @@ class Plugin extends Model
         'source_url',
         'source_ref',
         'commit_sha',
+        'content_hash',
         'enabled',
         'permissions',
         'approved_permissions',
@@ -68,6 +70,7 @@ class Plugin extends Model
         'source_url' => 'required|string|max:500',
         'source_ref' => 'required|string|max:191',
         'commit_sha' => 'nullable|string|max:64',
+        'content_hash' => 'nullable|string|max:64',
         'enabled' => 'boolean',
         'permissions' => 'required|array',
         'approved_permissions' => 'nullable|array',

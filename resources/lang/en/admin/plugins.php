@@ -33,4 +33,6 @@ return [
     'confirm_upgrade_all_outdated' => 'Upgrade all outdated plugins from their upstream sources?',
     'outdated_banner' => 'A newer version is available: :version',
     'outdated_commit_banner' => 'The configured branch has a newer commit (:commit).',
+    'outdated_hash_banner' => 'Installed plugin files differ from the upstream source on :ref.',
+    'new_files_available' => 'Upstream files changed',
 ];

@@ -75,6 +75,8 @@
                                                     <small class="text-muted">@lang('admin/plugins.latest_version', ['version' => $check['latest_version']])</small>
                                                 @elseif($check['remote_commit'])
                                                     <small class="text-muted">@lang('admin/plugins.new_commit_available')</small>
+                                                @elseif(($check['check_method'] ?? null) === 'hash')
+                                                    <small class="text-muted">@lang('admin/plugins.new_files_available')</small>
                                                 @endif
                                             @endif
                                         </td>
