@@ -125,10 +125,13 @@ class PanelUpgradeService
         }
 
         $this->runProcess(['git', 'remote', 'set-url', $remote, $repoUrl], base_path(), $logger);
-        $this->runProcess(['git', 'fetch', $remote, $branch], base_path(), $logger);
+        $this->fetchGitBranch($remote, $branch, $logger);
 
         $ref = $remote . '/' . $branch;
         $strategy = $this->upstreamVersionService->gitStrategy();
+
+        $this->log($logger, 'Checking out configured branch ' . $branch . ' from ' . $ref . '.');
+        $this->runProcess(['git', 'checkout', '-B', $branch, $ref], base_path(), $logger);
 
         if ($strategy === 'reset') {
             $this->log($logger, 'Resetting panel checkout to ' . $ref . ' (git strategy: reset).');
@@ -150,6 +153,29 @@ class PanelUpgradeService
         }
 
         $this->upstreamVersionService->recordInstalledCommit();
+        $this->upstreamVersionService->clearUpdateCache();
+    }
+
+    private function fetchGitBranch(string $remote, string $branch, ?callable $logger): void
+    {
+        $attempts = [
+            ['git', 'fetch', '--prune', '--depth', '1', $remote, $branch],
+            ['git', 'fetch', '--prune', $remote, $branch],
+        ];
+
+        foreach ($attempts as $command) {
+            try {
+                $this->runProcess($command, base_path(), $logger, 300);
+
+                return;
+            } catch (DisplayException $exception) {
+                $this->log($logger, 'Fetch attempt failed: ' . $exception->getMessage());
+            }
+        }
+
+        $this->log($logger, 'Attempting unshallow fetch for ' . $remote . '...');
+        $this->runProcess(['git', 'fetch', '--unshallow', $remote], base_path(), $logger, 600);
+        $this->runProcess(['git', 'fetch', '--prune', $remote, $branch], base_path(), $logger, 300);
     }
 
     private function isNonFastForwardMergeError(string $message): bool

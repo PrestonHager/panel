@@ -325,7 +325,7 @@ class PanelBackupService
 
         $process = Process::fromShellCommandline(
             sprintf(
-                'tar --exclude=./logs --exclude=./framework/cache -czf %s -C %s .',
+                'tar --exclude=./logs --exclude=./framework/cache --exclude=./panel-upgrades -czf %s -C %s .',
                 escapeshellarg($targetPath),
                 escapeshellarg($source)
             )

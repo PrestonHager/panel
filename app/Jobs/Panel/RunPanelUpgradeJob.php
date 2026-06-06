@@ -12,6 +12,11 @@ class RunPanelUpgradeJob implements ShouldQueue
 
     public int $timeout = 3600;
 
+    public function __construct()
+    {
+        $this->onQueue('high');
+    }
+
     public function handle(PanelUpgradeService $upgradeService): void
     {
         $upgradeService->resetStatus();
