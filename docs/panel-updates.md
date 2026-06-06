@@ -43,6 +43,7 @@ Open **Admin → Settings → Updates** to configure where the panel checks for 
 | Branch | Git branch/ref used for commit checks and git upgrades (for example `feat/plugin-manager`) |
 | Release | Optional pinned version for release tarball mode |
 | Git remote | Remote name used for git fetch (default `origin`) |
+| Git strategy | `auto`, `ff-only`, or `reset` — see below |
 
 Environment defaults live in `config/pterodactyl.php` under `update.*` and can be overridden in the settings table when `APP_ENVIRONMENT_ONLY=false`:
 
@@ -53,6 +54,17 @@ Environment defaults live in `config/pterodactyl.php` under `update.*` and can b
 | `PTERODACTYL_UPDATE_BRANCH` | Branch |
 | `PTERODACTYL_UPDATE_RELEASE` | Pinned release |
 | `PTERODACTYL_UPDATE_GIT_REMOTE` | Git remote |
+| `PTERODACTYL_UPDATE_GIT_STRATEGY` | Git strategy |
+
+### Git upgrade strategies
+
+| Strategy | Behavior |
+|----------|----------|
+| `ff-only` | Only fast-forward merges. Fails if the checkout was cloned from a different upstream (for example official `release/v1.11.11` but updates are configured for a fork). |
+| `reset` | Always `git reset --hard` to the configured branch after fetch. |
+| `auto` (default) | Try fast-forward first; if histories diverge or are unrelated, reset to the remote branch. Use with `p:upgrade:safe` so a backup exists before the reset. |
+
+Production containers bootstrapped from the official Pterodactyl release tag must use `auto` or `reset` when switching to a fork such as `PrestonHager/panel`.
 
 ### How updates are detected
 

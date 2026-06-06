@@ -49,6 +49,12 @@
                                 (<a href="{{ $latestRelease['url'] }}" target="_blank" rel="noopener">view release</a>)
                             @endif
                             <br>
+                        @elseif(($updateCheck['release_status'] ?? null) === 'none')
+                            No GitHub release is published for <code>{{ $updateCheck['repository'] }}</code>.
+                            Updates are tracked from branch <code>{{ $updateCheck['branch'] }}</code> by commit instead.<br>
+                        @elseif(!empty($updateCheck['upstream_error']) && empty($updateCheck['remote_commit']))
+                            Could not query GitHub for this upstream:
+                            <span class="text-muted">{{ $updateCheck['upstream_error'] }}</span><br>
                         @else
                             Latest upstream release could not be determined.<br>
                         @endif
@@ -76,11 +82,14 @@
                         </div>
                     @else
                         <div class="alert alert-success">
-                            Your panel matches the latest detected upstream release
-                            @if($updateCheck['remote_commit'] && ($updateCheck['check_method'] ?? null) === 'commit')
-                                and branch commit
+                            @if(($updateCheck['release_status'] ?? null) === 'none' || ($updateCheck['check_method'] ?? null) === 'commit')
+                                Your panel matches the latest commit on
+                                <code>{{ $updateCheck['repository'] }}</code> branch
+                                <code>{{ $updateCheck['branch'] }}</code>.
+                            @else
+                                Your panel matches the latest detected upstream release for
+                                <code>{{ $updateCheck['repository'] }}</code>.
                             @endif
-                            for <code>{{ $updateCheck['repository'] }}</code>.
                         </div>
                     @endif
                     @if(strtolower($updateCheck['repository']) === 'pterodactyl/panel' && $detectedMode === 'git')

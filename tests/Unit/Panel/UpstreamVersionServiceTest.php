@@ -3,6 +3,7 @@
 namespace Pterodactyl\Tests\Unit\Panel;
 
 use PHPUnit\Framework\TestCase;
+use Pterodactyl\Services\Panel\PanelGitHubApiClient;
 use Pterodactyl\Services\Panel\UpstreamVersionService;
 use Pterodactyl\Contracts\Repository\SettingsRepositoryInterface;
 
@@ -35,9 +36,11 @@ class UpstreamVersionServiceTest extends TestCase
             ['settings::pterodactyl:update:commit_sha', null, 'oldcommit000000'],
         ]));
         $service->releaseResponse = [
-            'tag' => 'v1.12.4',
-            'version' => '1.12.4',
-            'url' => 'https://github.com/PrestonHager/panel/releases/latest',
+            'tag' => null,
+            'version' => null,
+            'url' => null,
+            'status' => 'none',
+            'error' => null,
         ];
         $service->commitResponse = 'abc123def456';
         $service->appVersion = '1.12.4';
@@ -47,6 +50,7 @@ class UpstreamVersionServiceTest extends TestCase
 
         $this->assertTrue($check['update_available']);
         $this->assertSame('commit', $check['check_method']);
+        $this->assertSame('none', $check['release_status']);
         $this->assertSame('feat/plugin-manager', $check['latest_ref']);
         $this->assertSame('abc123def456', $check['remote_commit']);
     }
@@ -62,13 +66,14 @@ class UpstreamVersionServiceTest extends TestCase
             ['settings::pterodactyl:update:commit_sha', null, 'abc123def456'],
         ]));
         $service->releaseResponse = [
-            'tag' => 'v1.12.4',
-            'version' => '1.12.4',
-            'url' => 'https://github.com/PrestonHager/panel/releases/latest',
+            'tag' => null,
+            'version' => null,
+            'url' => null,
+            'status' => 'none',
+            'error' => null,
         ];
         $service->commitResponse = 'abc123def456';
         $service->appVersion = '1.12.4';
-        $service->checkCommits = true;
 
         $check = $service->check();
 
@@ -89,6 +94,8 @@ class UpstreamVersionServiceTest extends TestCase
             'tag' => 'v1.13.0',
             'version' => '1.13.0',
             'url' => 'https://github.com/pterodactyl/panel/releases/latest',
+            'status' => 'found',
+            'error' => null,
         ];
         $service->appVersion = '1.12.4';
         $service->checkCommits = false;
@@ -104,7 +111,7 @@ class UpstreamVersionServiceTest extends TestCase
      */
     private function makeService(array $map): UpstreamVersionService
     {
-        return new UpstreamVersionService($this->makeSettings($map));
+        return new UpstreamVersionService($this->makeSettings($map), new PanelGitHubApiClient());
     }
 
     /**
@@ -136,14 +143,28 @@ class TestableUpstreamVersionService extends UpstreamVersionService
 
     public bool $checkCommits = true;
 
-    public function latestRelease(): array
+    public function __construct(SettingsRepositoryInterface $settings)
     {
-        return $this->releaseResponse ?? ['tag' => null, 'version' => null, 'url' => null];
+        parent::__construct($settings, new PanelGitHubApiClient());
     }
 
-    protected function fetchBranchHead(string $repository, string $ref): ?string
+    public function latestRelease(): array
     {
-        return $this->commitResponse;
+        return $this->releaseResponse ?? [
+            'tag' => null,
+            'version' => null,
+            'url' => null,
+            'status' => 'none',
+            'error' => null,
+        ];
+    }
+
+    /**
+     * @return array{0: ?string, 1: ?string}
+     */
+    protected function fetchBranchHead(string $repository, string $ref): array
+    {
+        return [$this->commitResponse, null];
     }
 
     protected function currentVersion(): string

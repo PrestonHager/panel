@@ -226,6 +226,8 @@ return [
         'branch' => env('PTERODACTYL_UPDATE_BRANCH', '1.0-develop'),
         'release' => env('PTERODACTYL_UPDATE_RELEASE'),
         'git_remote' => env('PTERODACTYL_UPDATE_GIT_REMOTE', 'origin'),
+        'git_strategy' => env('PTERODACTYL_UPDATE_GIT_STRATEGY', 'auto'),
+        'github_token' => env('PTERODACTYL_UPDATE_GITHUB_TOKEN'),
         'backup_retention' => (int) env('PTERODACTYL_UPDATE_BACKUP_RETENTION', 5),
     ],
 ];

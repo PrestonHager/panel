@@ -40,6 +40,8 @@ class UpgradeCheckCommand extends Command
 
         if ($check['latest_version']) {
             $this->line('Latest release: ' . $check['latest_version']);
+        } elseif (($check['release_status'] ?? null) === 'none') {
+            $this->line('Latest release: none published (tracking branch commits)');
         }
 
         if ($check['installed_commit']) {

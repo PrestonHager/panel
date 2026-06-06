@@ -126,9 +126,39 @@ class PanelUpgradeService
 
         $this->runProcess(['git', 'remote', 'set-url', $remote, $repoUrl], base_path(), $logger);
         $this->runProcess(['git', 'fetch', $remote, $branch], base_path(), $logger);
-        $this->runProcess(['git', 'merge', '--ff-only', $remote . '/' . $branch], base_path(), $logger);
+
+        $ref = $remote . '/' . $branch;
+        $strategy = $this->upstreamVersionService->gitStrategy();
+
+        if ($strategy === 'reset') {
+            $this->log($logger, 'Resetting panel checkout to ' . $ref . ' (git strategy: reset).');
+            $this->runProcess(['git', 'reset', '--hard', $ref], base_path(), $logger);
+        } else {
+            try {
+                $this->runProcess(['git', 'merge', '--ff-only', $ref], base_path(), $logger);
+            } catch (DisplayException $exception) {
+                if ($strategy !== 'auto' || !$this->isNonFastForwardMergeError($exception->getMessage())) {
+                    throw $exception;
+                }
+
+                $this->log(
+                    $logger,
+                    'Fast-forward merge is not possible (often caused by switching from the official release clone to a fork). Resetting to ' . $ref . '.'
+                );
+                $this->runProcess(['git', 'reset', '--hard', $ref], base_path(), $logger);
+            }
+        }
 
         $this->upstreamVersionService->recordInstalledCommit();
+    }
+
+    private function isNonFastForwardMergeError(string $message): bool
+    {
+        $message = strtolower($message);
+
+        return str_contains($message, 'not possible to fast-forward')
+            || str_contains($message, 'refusing to merge unrelated histories')
+            || str_contains($message, "diverging branches can't be fast-forwarded");
     }
 
     private function downloadReleaseArchive(?string $url, ?string $release, ?callable $logger): void

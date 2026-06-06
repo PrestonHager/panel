@@ -13,6 +13,7 @@ class UpstreamVersionService
 
     public function __construct(
         private readonly SettingsRepositoryInterface $settings,
+        private readonly PanelGitHubApiClient $github,
     ) {
     }
 
@@ -46,6 +47,14 @@ class UpstreamVersionService
     {
         return $this->settings->get('settings::pterodactyl:update:git_remote', null)
             ?: config('pterodactyl.update.git_remote', 'origin');
+    }
+
+    public function gitStrategy(): string
+    {
+        $strategy = $this->settings->get('settings::pterodactyl:update:git_strategy', null)
+            ?: config('pterodactyl.update.git_strategy', 'auto');
+
+        return in_array($strategy, ['auto', 'ff-only', 'reset'], true) ? $strategy : 'auto';
     }
 
     public function storedCommitSha(): ?string
@@ -83,6 +92,8 @@ class UpstreamVersionService
      *     branch: string,
      *     installed_commit: ?string,
      *     remote_commit: ?string,
+     *     release_status: 'found'|'none'|'error'|'official',
+     *     upstream_error: ?string,
      *     check_method: 'release'|'commit'|'none'|'canary'|'unknown'
      * }
      */
@@ -104,6 +115,8 @@ class UpstreamVersionService
             'branch' => $branch,
             'installed_commit' => null,
             'remote_commit' => null,
+            'release_status' => $latest['status'],
+            'upstream_error' => $latest['error'],
             'check_method' => 'unknown',
         ];
 
@@ -122,10 +135,14 @@ class UpstreamVersionService
         $commitOutdated = false;
 
         if ($this->shouldCheckCommits()) {
-            $remoteCommit = $this->fetchBranchHead($repository, $branch);
+            [$remoteCommit, $commitError] = $this->fetchBranchHead($repository, $branch);
             $installedCommit = $this->resolveInstalledCommitSha();
             $commitOutdated = $remoteCommit !== null
                 && ($installedCommit === null || !hash_equals($installedCommit, $remoteCommit));
+
+            if ($remoteCommit === null && $commitError !== null) {
+                $base['upstream_error'] = $commitError;
+            }
         }
 
         if ($releaseOutdated) {
@@ -157,7 +174,13 @@ class UpstreamVersionService
     }
 
     /**
-     * @return array{tag: ?string, version: ?string, url: ?string}
+     * @return array{
+     *     tag: ?string,
+     *     version: ?string,
+     *     url: ?string,
+     *     status: 'found'|'none'|'error'|'official',
+     *     error: ?string
+     * }
      */
     public function latestRelease(): array
     {
@@ -169,29 +192,53 @@ class UpstreamVersionService
                     'tag' => 'v' . $service->getPanel(),
                     'version' => $service->getPanel(),
                     'url' => 'https://github.com/pterodactyl/panel/releases/latest',
+                    'status' => 'official',
+                    'error' => null,
                 ];
             } catch (\Throwable) {
             }
+        }
+
+        $pinned = $this->release();
+        if ($pinned !== null) {
+            $repo = $this->normalizeRepository($this->repository());
+
+            return [
+                'tag' => 'v' . ltrim($pinned, 'v'),
+                'version' => ltrim($pinned, 'v'),
+                'url' => sprintf('https://github.com/%s/releases/tag/v%s', $repo, ltrim($pinned, 'v')),
+                'status' => 'found',
+                'error' => null,
+            ];
         }
 
         $repo = $this->normalizeRepository($this->repository());
         $cacheKey = 'panel:upstream:latest:' . md5($repo);
 
         return Cache::remember($cacheKey, now()->addMinutes(15), function () use ($repo) {
-            $process = Process::fromShellCommandline(
-                'curl -fsSL ' . escapeshellarg('https://api.github.com/repos/' . $repo . '/releases/latest')
-            );
-            $process->run();
+            $response = $this->github->get('/repos/' . $repo . '/releases/latest');
 
-            if (!$process->isSuccessful()) {
-                return ['tag' => null, 'version' => null, 'url' => null];
+            if ($response['status'] === 404) {
+                return [
+                    'tag' => null,
+                    'version' => null,
+                    'url' => null,
+                    'status' => 'none',
+                    'error' => null,
+                ];
             }
 
-            $data = json_decode($process->getOutput(), true);
-            if (!is_array($data)) {
-                return ['tag' => null, 'version' => null, 'url' => null];
+            if ($response['data'] === null) {
+                return [
+                    'tag' => null,
+                    'version' => null,
+                    'url' => null,
+                    'status' => 'error',
+                    'error' => $response['error'],
+                ];
             }
 
+            $data = $response['data'];
             $tag = isset($data['tag_name']) ? (string) $data['tag_name'] : null;
             $version = $tag ? ltrim($tag, 'v') : null;
 
@@ -199,6 +246,8 @@ class UpstreamVersionService
                 'tag' => $tag,
                 'version' => $version,
                 'url' => isset($data['html_url']) ? (string) $data['html_url'] : null,
+                'status' => 'found',
+                'error' => null,
             ];
         });
     }
@@ -303,30 +352,21 @@ class UpstreamVersionService
         return $sha !== '' ? $sha : null;
     }
 
-    protected function fetchBranchHead(string $repository, string $ref): ?string
+    /**
+     * @return array{0: ?string, 1: ?string}
+     */
+    protected function fetchBranchHead(string $repository, string $ref): array
     {
         $cacheKey = 'panel:upstream:commit:' . md5($repository . ':' . $ref);
 
         return Cache::remember($cacheKey, now()->addMinutes(15), function () use ($repository, $ref) {
-            $process = Process::fromShellCommandline(
-                'curl -fsSL ' . escapeshellarg(sprintf(
-                    'https://api.github.com/repos/%s/commits/%s',
-                    $repository,
-                    $ref
-                ))
-            );
-            $process->run();
+            $response = $this->github->get(sprintf('/repos/%s/commits/%s', $repository, $ref));
 
-            if (!$process->isSuccessful()) {
-                return null;
+            if ($response['data'] === null || !isset($response['data']['sha'])) {
+                return [null, $response['error']];
             }
 
-            $data = json_decode($process->getOutput(), true);
-            if (!is_array($data) || !isset($data['sha'])) {
-                return null;
-            }
-
-            return (string) $data['sha'];
+            return [(string) $response['data']['sha'], null];
         });
     }
 }
