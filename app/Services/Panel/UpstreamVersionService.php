@@ -115,8 +115,8 @@ class UpstreamVersionService
             'branch' => $branch,
             'installed_commit' => null,
             'remote_commit' => null,
-            'release_status' => $latest['status'],
-            'upstream_error' => $latest['error'],
+            'release_status' => $latest['status'] ?? 'unknown',
+            'upstream_error' => $latest['error'] ?? null,
             'check_method' => 'unknown',
         ];
 
@@ -213,7 +213,7 @@ class UpstreamVersionService
         }
 
         $repo = $this->normalizeRepository($this->repository());
-        $cacheKey = 'panel:upstream:latest:' . md5($repo);
+        $cacheKey = 'panel:upstream:latest:v2:' . md5($repo);
 
         return Cache::remember($cacheKey, now()->addMinutes(15), function () use ($repo) {
             $response = $this->github->get('/repos/' . $repo . '/releases/latest');
@@ -280,7 +280,9 @@ class UpstreamVersionService
         $repository = $this->normalizeRepository($this->repository());
         $branch = $this->branch();
 
+        Cache::forget('panel:upstream:latest:v2:' . md5($repository));
         Cache::forget('panel:upstream:latest:' . md5($repository));
+        Cache::forget('panel:upstream:commit:v2:' . md5($repository . ':' . $branch));
         Cache::forget('panel:upstream:commit:' . md5($repository . ':' . $branch));
     }
 
@@ -357,9 +359,9 @@ class UpstreamVersionService
      */
     protected function fetchBranchHead(string $repository, string $ref): array
     {
-        $cacheKey = 'panel:upstream:commit:' . md5($repository . ':' . $ref);
+        $cacheKey = 'panel:upstream:commit:v2:' . md5($repository . ':' . $ref);
 
-        return Cache::remember($cacheKey, now()->addMinutes(15), function () use ($repository, $ref) {
+        $cached = Cache::remember($cacheKey, now()->addMinutes(15), function () use ($repository, $ref) {
             $response = $this->github->get(sprintf('/repos/%s/commits/%s', $repository, $ref));
 
             if ($response['data'] === null || !isset($response['data']['sha'])) {
@@ -368,5 +370,11 @@ class UpstreamVersionService
 
             return [(string) $response['data']['sha'], null];
         });
+
+        if (is_string($cached)) {
+            return [$cached, null];
+        }
+
+        return $cached;
     }
 }

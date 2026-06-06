@@ -40,7 +40,7 @@ class UpdatesController extends Controller
                 'version' => $updateCheck['latest_version'],
                 'tag' => $updateCheck['latest_tag'],
                 'url' => $updateCheck['release_url'],
-                'status' => $updateCheck['release_status'],
+                'status' => $updateCheck['release_status'] ?? 'unknown',
             ],
             'updateCheck' => $updateCheck,
             'updateAvailable' => $updateCheck['update_available'],
