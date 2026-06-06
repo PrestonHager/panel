@@ -31,8 +31,8 @@ class PluginDataAccessor
     {
         $this->gate->authorize(Permissions::SERVER_METADATA_WRITE);
 
-        if ($subjectType !== 'server') {
-            throw new PluginException('Only server subject metadata is supported in v1.');
+        if ($subjectType !== 'server' && $subjectType !== 'user' && $subjectType !== 'global') {
+            throw new PluginException('Unsupported subject type. Supported: server, user, global.');
         }
 
         PluginData::query()->updateOrCreate(

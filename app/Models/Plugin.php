@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property array|null $client_permissions
  * @property array|null $ui_config
  * @property array|null $config
+ * @property array|null $migration_version
  * @property \Illuminate\Support\Carbon $installed_at
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
@@ -48,6 +49,7 @@ class Plugin extends Model
         'client_permissions',
         'ui_config',
         'config',
+        'migration_version',
         'installed_at',
     ];
 
@@ -60,6 +62,7 @@ class Plugin extends Model
         'client_permissions' => 'array',
         'ui_config' => 'array',
         'config' => 'encrypted:array',
+        'migration_version' => 'array',
         'installed_at' => 'datetime',
     ];
 

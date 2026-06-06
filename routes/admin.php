@@ -23,6 +23,7 @@ Route::group(['prefix' => 'plugins'], function () {
 
     Route::get('/view/{plugin}', [Admin\Plugins\PluginController::class, 'view'])->name('admin.plugins.view');
     Route::get('/view/{plugin}/settings', [Admin\Plugins\PluginController::class, 'settings'])->name('admin.plugins.settings');
+    Route::get('/view/{plugin}/designer', [Admin\Plugins\PluginController::class, 'designer'])->name('admin.plugins.designer');
     Route::patch('/view/{plugin}/settings', [Admin\Plugins\PluginController::class, 'updateSettings'])->name('admin.plugins.settings.update');
     Route::patch('/view/{plugin}/permissions', [Admin\Plugins\PluginController::class, 'updatePermissions'])->name('admin.plugins.permissions.update');
     Route::post('/view/{plugin}/permissions/approve', [Admin\Plugins\PluginController::class, 'approvePendingPermissions'])->name('admin.plugins.permissions.approve');

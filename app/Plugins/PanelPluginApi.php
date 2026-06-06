@@ -4,7 +4,7 @@ namespace Pterodactyl\Plugins;
 
 final class PanelPluginApi
 {
-    public const VERSION = '2.1';
+    public const VERSION = '3.0';
 
     public static function satisfies(?string $required): bool
     {

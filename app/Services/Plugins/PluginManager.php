@@ -16,6 +16,7 @@ class PluginManager
         private readonly PluginRegistry $registry,
         private readonly PluginThemeService $themeService,
         private readonly PluginContentHashService $contentHash,
+        private readonly PluginMigrationRunner $migrationRunner,
     ) {
     }
 
@@ -160,6 +161,8 @@ class PluginManager
         $this->registry->load();
         $this->registry->bootEntry($plugin->id);
 
+        $this->migrationRunner->migrate($plugin->fresh());
+
         Activity::event('plugin:enable')->property('plugin_id', $plugin->id)->log();
 
         $this->themeService->regenerateOverlayCache();
@@ -173,6 +176,12 @@ class PluginManager
     {
         if (!$plugin->enabled) {
             return $plugin;
+        }
+
+        try {
+            $this->migrationRunner->rollback($plugin);
+        } catch (\Throwable) {
+            // Continue disabling even if rollback fails.
         }
 
         $plugin->enabled = false;

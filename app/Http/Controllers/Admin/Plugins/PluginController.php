@@ -18,6 +18,7 @@ use Pterodactyl\Services\Plugins\PluginSettingsValidator;
 use Pterodactyl\Services\Plugins\PluginSettingsSchemaService;
 use Pterodactyl\Services\Plugins\PluginVersionService;
 use Pterodactyl\Services\Plugins\PluginThemeService;
+use Pterodactyl\Services\Plugins\PluginUiConfigService;
 use Pterodactyl\Plugins\Exceptions\PluginException;
 use Pterodactyl\Http\Requests\Admin\Plugin\InstallPluginRequest;
 use Pterodactyl\Http\Requests\Admin\Plugin\UpdatePluginSettingsRequest;
@@ -35,6 +36,7 @@ class PluginController extends Controller
         private PluginSettingsStore $settingsStore,
         private PluginVersionService $pluginVersionService,
         private PluginThemeService $themeService,
+        private PluginUiConfigService $pluginUiConfigService,
     ) {
     }
 
@@ -118,6 +120,21 @@ class PluginController extends Controller
             'schema' => $schema,
             'values' => $hasStructuredForm ? $this->settingsStore->readAdminConfig($plugin, $schema) : [],
             'hasStructuredForm' => $hasStructuredForm,
+        ]);
+    }
+
+    public function designer(Plugin $plugin): View
+    {
+        $tab = $this->pluginUiConfigService->adminUiFor($plugin);
+        if (is_null($tab)) {
+            abort(404);
+        }
+
+        return view('admin.plugins.designer', [
+            'plugin' => $plugin,
+            'pluginId' => $plugin->id,
+            'pluginName' => $tab['name'],
+            'bundle' => $tab['bundle'],
         ]);
     }
 

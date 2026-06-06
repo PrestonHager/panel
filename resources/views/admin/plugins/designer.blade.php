@@ -3,21 +3,20 @@
 @php($pluginRootId = 'plugin-root-' . str_replace('.', '-', $pluginId))
 
 @section('title')
-    Server – {{ $server->name }}: {{ $pluginName }}
+    {{ $plugin->name }} Designer
 @endsection
 
 @section('content-header')
-    <h1>{{ $server->name }}<small>{{ $pluginName }}</small></h1>
+    <h1>{{ $plugin->name }}<small>Designer</small></h1>
     <ol class="breadcrumb">
         <li><a href="{{ route('admin.index') }}">Admin</a></li>
-        <li><a href="{{ route('admin.servers') }}">Servers</a></li>
-        <li><a href="{{ route('admin.servers.view', $server->id) }}">{{ $server->name }}</a></li>
-        <li class="active">{{ $pluginName }}</li>
+        <li><a href="{{ route('admin.plugins') }}">Plugins</a></li>
+        <li><a href="{{ route('admin.plugins.view', $plugin->id) }}">{{ $plugin->name }}</a></li>
+        <li class="active">Designer</li>
     </ol>
 @endsection
 
 @section('content')
-@include('admin.servers.partials.navigation')
 <div class="row">
     <div class="col-xs-12">
         <div class="box box-primary">
@@ -42,8 +41,9 @@
         window.__PterodactylPluginContext = {
             pluginId: @json($pluginId),
             rootId: @json($pluginRootId),
-            serverUuid: @json($server->uuid),
-            apiBase: @json('/api/plugins/' . $pluginId),
+            serverUuid: '',
+            apiBase: @json('/api/plugins-admin/' . $pluginId),
+            publicApiBase: @json('/api/plugins-public/' . $pluginId),
             csrfToken: @json(csrf_token()),
             surface: 'admin',
             getPermissions: function () {
@@ -73,7 +73,7 @@
             }
 
             if (root) {
-                root.innerHTML = '<p class="text-danger">Plugin UI failed to load. Check the browser console and confirm <code>/plugins-assets/{{ $pluginId }}/{{ ltrim($bundle, '/') }}</code> returns JavaScript.</p>';
+                root.innerHTML = '<p class="text-danger">Plugin designer failed to load.</p>';
             }
         })();
     </script>

@@ -127,6 +127,88 @@ class PluginUiConfigService
     }
 
     /**
+     * @return array<string, mixed>|null
+     */
+    public function clientUiFor(Plugin $plugin): ?array
+    {
+        if (!in_array(Permissions::UI_CLIENT_REGISTER, $plugin->effectivePermissions(), true)) {
+            return null;
+        }
+
+        if (!in_array(Permissions::UI_REGISTER, $plugin->effectivePermissions(), true)) {
+            return null;
+        }
+
+        $ui = $plugin->ui_config ?? [];
+        if (!empty($ui['client']) && is_array($ui['client'])) {
+            $client = $ui['client'];
+        } else {
+            $client = $this->readManifestClientUi($plugin);
+        }
+
+        return is_array($client) ? $client : null;
+    }
+
+    /**
+     * @return array{path: string, name: string, bundle: string}|null
+     */
+    public function adminUiFor(Plugin $plugin): ?array
+    {
+        if (!in_array(Permissions::UI_REGISTER, $plugin->effectivePermissions(), true)) {
+            return null;
+        }
+
+        $ui = $plugin->ui_config ?? [];
+        $admin = $ui['admin'] ?? null;
+        if (is_array($admin) && !empty($admin['path']) && !empty($admin['name']) && !empty($admin['bundle'])) {
+            return [
+                'path' => (string) $admin['path'],
+                'name' => (string) $admin['name'],
+                'bundle' => (string) $admin['bundle'],
+            ];
+        }
+
+        return $this->readManifestAdminUi($plugin);
+    }
+
+    /**
+     * @return array<int, array{id: string, ui: array{client: array<string, mixed>}}>
+     */
+    public function enabledClientDashboardPlugins(): array
+    {
+        $output = [];
+
+        foreach (Plugin::query()->where('enabled', true)->orderBy('name')->get() as $plugin) {
+            $client = $this->clientUiFor($plugin);
+            if (is_null($client)) {
+                continue;
+            }
+
+            $output[] = [
+                'id' => $plugin->id,
+                'ui' => [
+                    'client' => $client,
+                ],
+            ];
+        }
+
+        return $output;
+    }
+
+    /**
+     * @return array{path: string, name: string, bundle: string}|null
+     */
+    public function resolveAdminTab(string $pluginId): ?array
+    {
+        $plugin = Plugin::query()->where('id', $pluginId)->where('enabled', true)->first();
+        if (is_null($plugin)) {
+            return null;
+        }
+
+        return $this->adminUiFor($plugin);
+    }
+
+    /**
      * @return array<int, array{id: string, ui: array{server: array<string, mixed>}}>
      */
     public function enabledClientServerPlugins(): array
@@ -229,6 +311,55 @@ class PluginUiConfigService
         }
 
         return [
+            'name' => (string) $admin['name'],
+            'bundle' => (string) $admin['bundle'],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function readManifestClientUi(Plugin $plugin): ?array
+    {
+        $directory = PluginRegistry::directoryFor($plugin->id);
+        if (!is_dir($directory)) {
+            return null;
+        }
+
+        try {
+            $manifest = $this->validator->readFromDirectory($directory);
+        } catch (\Throwable) {
+            return null;
+        }
+
+        $client = $manifest->uiClient();
+
+        return is_array($client) ? $client : null;
+    }
+
+    /**
+     * @return array{path: string, name: string, bundle: string}|null
+     */
+    private function readManifestAdminUi(Plugin $plugin): ?array
+    {
+        $directory = PluginRegistry::directoryFor($plugin->id);
+        if (!is_dir($directory)) {
+            return null;
+        }
+
+        try {
+            $manifest = $this->validator->readFromDirectory($directory);
+        } catch (\Throwable) {
+            return null;
+        }
+
+        $admin = $manifest->uiAdmin();
+        if (is_null($admin)) {
+            return null;
+        }
+
+        return [
+            'path' => (string) $admin['path'],
             'name' => (string) $admin['name'],
             'bundle' => (string) $admin['bundle'],
         ];

@@ -5,7 +5,7 @@ namespace Pterodactyl\Http\Controllers\Plugins;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
-class PluginApiController
+class PluginAdminApiController
 {
     public function __construct(
         private readonly PluginApiDispatcher $dispatcher,
@@ -14,6 +14,6 @@ class PluginApiController
 
     public function __invoke(Request $request, string $plugin, string $path = ''): JsonResponse
     {
-        return $this->dispatcher->dispatch($request, $plugin, $path, 'client');
+        return $this->dispatcher->dispatch($request, $plugin, $path, 'admin');
     }
 }

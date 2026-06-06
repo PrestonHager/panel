@@ -22,6 +22,7 @@ Route::get('/permissions', [Client\ClientController::class, 'permissions']);
 
 Route::prefix('/plugins')->group(function () {
     Route::get('/enabled', [Client\Plugins\PluginController::class, 'enabled']);
+    Route::get('/blocks', [Client\Plugins\PluginController::class, 'blocks']);
     Route::get('/permissions', [Client\Plugins\PluginController::class, 'permissionsCatalog']);
     Route::get('/{plugin}/settings', [Client\Plugins\PluginSettingsController::class, 'showGlobal']);
     Route::patch('/{plugin}/settings', [Client\Plugins\PluginSettingsController::class, 'updateGlobal']);

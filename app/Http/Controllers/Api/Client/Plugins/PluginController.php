@@ -10,13 +10,24 @@ class PluginController extends ClientApiController
 {
     public function __construct(
         private readonly PluginUiConfigService $pluginUiConfigService,
+        private readonly BlockRegistry $blockRegistry,
     ) {
         parent::__construct();
     }
 
     public function enabled(): array
     {
-        return ['data' => $this->pluginUiConfigService->enabledClientServerPlugins()];
+        return [
+            'data' => [
+                'server' => $this->pluginUiConfigService->enabledClientServerPlugins(),
+                'client' => $this->pluginUiConfigService->enabledClientDashboardPlugins(),
+            ],
+        ];
+    }
+
+    public function blocks(): array
+    {
+        return ['data' => $this->blockRegistry->catalog()];
     }
 
     public function permissionsCatalog(): array

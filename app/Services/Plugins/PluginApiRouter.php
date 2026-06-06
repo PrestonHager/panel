@@ -7,9 +7,9 @@ use Pterodactyl\Plugins\PluginManifest;
 class PluginApiRouter
 {
     /**
-     * @return array{route: array{method: string, path: string, handler: string, permission?: string|null}, params: array<string, string>}|null
+     * @return array{route: array{method: string, path: string, handler: string, permission?: string|null, auth?: string}, params: array<string, string>}|null
      */
-    public function match(PluginManifest $manifest, string $method, string $path): ?array
+    public function match(PluginManifest $manifest, string $method, string $path, ?string $auth = null): ?array
     {
         $path = '/' . trim($path, '/');
         if ($path === '/') {
@@ -18,6 +18,11 @@ class PluginApiRouter
 
         foreach ($manifest->apiRoutes as $route) {
             if (strtoupper($route['method']) !== strtoupper($method)) {
+                continue;
+            }
+
+            $routeAuth = $route['auth'] ?? 'client';
+            if (!is_null($auth) && $routeAuth !== $auth) {
                 continue;
             }
 

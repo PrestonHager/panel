@@ -107,7 +107,7 @@ export default () => {
         });
 
         getEnabledPlugins()
-            .then(setEnabledPlugins)
+            .then((response) => setEnabledPlugins(response.server))
             .catch((err) => console.error('Failed to load plugins', err));
 
         return () => {

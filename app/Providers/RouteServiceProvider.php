@@ -61,6 +61,14 @@ class RouteServiceProvider extends ServiceProvider
                 Route::middleware(['client-api', 'throttle:api.client'])
                     ->prefix('/api/plugins')
                     ->group(base_path('routes/api-plugins.php'));
+
+                Route::middleware(['api', 'throttle:plugin-public'])
+                    ->prefix('/api/plugins-public')
+                    ->group(base_path('routes/api-plugins-public.php'));
+
+                Route::middleware(['web', 'auth.session', RequireTwoFactorAuthentication::class, AdminAuthenticate::class, 'throttle:api.client'])
+                    ->prefix('/api/plugins-admin')
+                    ->group(base_path('routes/api-plugins-admin.php'));
             });
 
             Route::middleware('daemon')
@@ -110,6 +118,10 @@ class RouteServiceProvider extends ServiceProvider
                 config('http.rate_limit.application_period'),
                 config('http.rate_limit.application')
             )->by($key);
+        });
+
+        RateLimiter::for('plugin-public', function (Request $request) {
+            return Limit::perMinute(30)->by($request->ip());
         });
 
         ResourceLimit::boot();

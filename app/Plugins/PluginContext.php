@@ -7,7 +7,9 @@ use Pterodactyl\Plugins\Accessors\ConfigAccessor;
 use Pterodactyl\Plugins\Accessors\HttpClientAccessor;
 use Pterodactyl\Plugins\Accessors\PluginDataAccessor;
 use Pterodactyl\Plugins\Accessors\ServerAccessor;
+use Pterodactyl\Plugins\Accessors\ServerProvisioningAccessor;
 use Pterodactyl\Plugins\Accessors\SettingsAccessor;
+use Pterodactyl\Plugins\Accessors\UserAccessor;
 
 class PluginContext
 {
@@ -20,6 +22,8 @@ class PluginContext
         private readonly PluginDataAccessor $data,
         private readonly HttpClientAccessor $http,
         private readonly ActivityAccessor $activity,
+        private readonly UserAccessor $users,
+        private readonly ServerProvisioningAccessor $provisioning,
     ) {
     }
 
@@ -61,5 +65,15 @@ class PluginContext
     public function activity(): ActivityAccessor
     {
         return $this->activity;
+    }
+
+    public function users(): UserAccessor
+    {
+        return $this->users;
+    }
+
+    public function provisioning(): ServerProvisioningAccessor
+    {
+        return $this->provisioning;
     }
 }

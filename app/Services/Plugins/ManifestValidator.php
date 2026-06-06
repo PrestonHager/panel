@@ -152,12 +152,29 @@ class ManifestValidator
                 throw new InvalidPluginManifestException('API route permission must be a string.');
             }
 
-            if (is_string($routePermission) && !array_key_exists($routePermission, $clientPermissions)) {
+            $auth = (string) ($route['auth'] ?? 'client');
+            if (!in_array($auth, ['client', 'public', 'admin'], true)) {
+                throw new InvalidPluginManifestException('API route auth must be "client", "public", or "admin".');
+            }
+
+            if ($auth === 'client' && is_string($routePermission) && !array_key_exists($routePermission, $clientPermissions)) {
                 throw new InvalidPluginManifestException(sprintf(
                     'API route permission "%s" is not declared in clientPermissions.',
                     $routePermission
                 ));
             }
+        }
+
+        $migrations = $data['migrations'] ?? [];
+        if (!is_array($migrations)) {
+            throw new InvalidPluginManifestException('Manifest "migrations" must be an array.');
+        }
+
+        foreach ($migrations as $migrationClass) {
+            if (!is_string($migrationClass) || $migrationClass === '') {
+                throw new InvalidPluginManifestException('Each migration entry must be a class name string.');
+            }
+            $this->assertClassInNamespace($migrationClass, $namespacePrefix, 'migration');
         }
 
         $ui = $data['ui'] ?? [];
@@ -201,6 +218,73 @@ class ManifestValidator
                     throw new InvalidPluginManifestException(sprintf('ui.admin.server.%s is required.', $field));
                 }
             }
+        }
+
+        $uiAdmin = $ui['admin'] ?? null;
+        if (is_array($uiAdmin) && isset($uiAdmin['path'])) {
+            foreach (['path', 'name', 'bundle'] as $field) {
+                if (empty($uiAdmin[$field]) || !is_string($uiAdmin[$field])) {
+                    throw new InvalidPluginManifestException(sprintf('ui.admin.%s is required.', $field));
+                }
+            }
+
+            if (!str_starts_with($uiAdmin['path'], '/')) {
+                throw new InvalidPluginManifestException('ui.admin.path must start with "/".');
+            }
+        }
+
+        $uiClient = $ui['client'] ?? null;
+        if ($uiClient !== null) {
+            if (!is_array($uiClient)) {
+                throw new InvalidPluginManifestException('Manifest "ui.client" must be an object.');
+            }
+
+            if (!in_array(Permissions::UI_CLIENT_REGISTER, $permissions, true)) {
+                throw new InvalidPluginManifestException('Plugins declaring ui.client must request the "ui.client.register" permission.');
+            }
+
+            foreach (['path', 'name', 'bundle'] as $field) {
+                if (empty($uiClient[$field]) || !is_string($uiClient[$field])) {
+                    throw new InvalidPluginManifestException(sprintf('ui.client.%s is required.', $field));
+                }
+            }
+
+            if (!str_starts_with($uiClient['path'], '/')) {
+                throw new InvalidPluginManifestException('ui.client.path must start with "/".');
+            }
+
+            $clientPermission = $uiClient['permission'] ?? null;
+            if ($clientPermission !== null && !array_key_exists($clientPermission, $clientPermissions)) {
+                throw new InvalidPluginManifestException('ui.client.permission must be declared in clientPermissions.');
+            }
+        }
+
+        $uiBlocks = $ui['blocks'] ?? [];
+        if (!empty($uiBlocks)) {
+            if (!is_array($uiBlocks)) {
+                throw new InvalidPluginManifestException('Manifest "ui.blocks" must be an array.');
+            }
+
+            if (!in_array(Permissions::UI_BLOCKS_REGISTER, $permissions, true)) {
+                throw new InvalidPluginManifestException('Plugins declaring ui.blocks must request the "ui.blocks.register" permission.');
+            }
+
+            foreach ($uiBlocks as $index => $block) {
+                if (!is_array($block)) {
+                    throw new InvalidPluginManifestException(sprintf('ui.blocks[%d] must be an object.', $index));
+                }
+
+                foreach (['id', 'label'] as $field) {
+                    if (empty($block[$field]) || !is_string($block[$field])) {
+                        throw new InvalidPluginManifestException(sprintf('ui.blocks[%d].%s is required.', $index, $field));
+                    }
+                }
+            }
+        }
+
+        $uiKeybinds = $ui['keybinds'] ?? [];
+        if (!empty($uiKeybinds) && !is_array($uiKeybinds)) {
+            throw new InvalidPluginManifestException('Manifest "ui.keybinds" must be an array.');
         }
 
         if (in_array(Permissions::HTTP_REQUEST, $permissions, true)) {
