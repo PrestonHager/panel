@@ -216,7 +216,7 @@
                 <div class="modal-body">
                     <div id="upgrade-step-1">
                         <p>Before upgrading, consider downloading a bundle of your environment file, panel settings, and installed plugin list.</p>
-                        <p class="text-muted">You can decline this optional download and continue. An automatic backup is still created before updating.</p>
+                        <p class="text-muted">After the download finishes, you will be asked to confirm and run the upgrade. An automatic backup is still created before updating.</p>
                     </div>
                     <div id="upgrade-step-2" style="display:none;">
                         <p>An automatic backup will be created, then the panel will update from your configured upstream repository.</p>
@@ -225,8 +225,10 @@
                 </div>
                 <div class="modal-footer">
                     <div id="upgrade-step-1-actions">
-                        <a href="{{ route('admin.settings.updates.download') }}" class="btn btn-primary">Download Backup Bundle</a>
-                        <button type="button" class="btn btn-default" id="decline-download-continue">Decline &amp; Continue</button>
+                        <button type="button" class="btn btn-primary" id="download-backup-bundle">
+                            <i class="fa fa-download"></i> Download Backup Bundle
+                        </button>
+                        <button type="button" class="btn btn-default" id="decline-download-continue">Skip download &amp; continue</button>
                         <button type="button" class="btn btn-link" data-dismiss="modal">Cancel</button>
                     </div>
                     <div id="upgrade-step-2-actions" style="display:none;">
@@ -262,6 +264,51 @@
 
             document.getElementById('decline-download-continue').addEventListener('click', function () {
                 showStep(2);
+            });
+
+            document.getElementById('download-backup-bundle').addEventListener('click', function () {
+                var button = this;
+                var url = '{{ route('admin.settings.updates.download') }}';
+                var originalHtml = button.innerHTML;
+
+                button.disabled = true;
+                button.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Preparing download...';
+
+                fetch(url, {
+                    credentials: 'same-origin',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/octet-stream' },
+                }).then(function (response) {
+                    if (!response.ok) {
+                        throw new Error('Download failed');
+                    }
+
+                    var filename = 'panel-config.zip';
+                    var disposition = response.headers.get('Content-Disposition');
+                    if (disposition) {
+                        var match = disposition.match(/filename=\"?([^\";]+)\"?/i);
+                        if (match) {
+                            filename = match[1];
+                        }
+                    }
+
+                    return response.blob().then(function (blob) {
+                        return { blob: blob, filename: filename };
+                    });
+                }).then(function (result) {
+                    var link = document.createElement('a');
+                    link.href = URL.createObjectURL(result.blob);
+                    link.download = result.filename;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(link.href);
+                    showStep(2);
+                }).catch(function () {
+                    window.location.href = url;
+                }).finally(function () {
+                    button.disabled = false;
+                    button.innerHTML = originalHtml;
+                });
             });
 
             function pollStatus() {

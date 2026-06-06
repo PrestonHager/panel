@@ -7,7 +7,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 use Prologue\Alerts\AlertsMessageBag;
 use Illuminate\Http\RedirectResponse;
-use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Pterodactyl\Jobs\Panel\RunPanelUpgradeJob;
 use Pterodactyl\Http\Controllers\Controller;
 use Pterodactyl\Services\Panel\PanelBackupService;
@@ -69,7 +69,7 @@ class UpdatesController extends Controller
         return redirect()->route('admin.settings.updates');
     }
 
-    public function downloadBundle(): StreamedResponse|RedirectResponse
+    public function downloadBundle(): BinaryFileResponse|RedirectResponse
     {
         try {
             $bundle = $this->backupService->createDownloadBundle();
